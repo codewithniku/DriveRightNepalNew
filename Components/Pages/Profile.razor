@@ -1,0 +1,104 @@
+﻿@page "/profile"
+@inherits MainLayout
+@inject NavigationManager Nav
+
+<head>
+    <link href="css/profile.css" rel="stylesheet" />
+</head>
+
+<div class="main-container">
+
+    <div class="header-container">
+        <span class="header-title">Your Profile</span>
+    </div>
+
+    <div class="profile-card">
+        <div class="profile-card-content">
+            <img src="images/profile.jpg" alt="Profile Picture" class="profile-pic" />
+            <div class="profile-info">
+                <span class="name">Nikesh Simkhada</span>
+                <span class="email">nikesh@example.com</span>
+                <span class="number">9866823031</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-stats">
+        <div class="stat-box">
+            <span class="stat-label">Lessons Learnt:</span>
+            <span class="stat-label">x</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">Quizzes Passed:</span>
+            <span class="stat-label">x</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">Average:</span>
+            <span class="stat-label">x</span>
+        </div>
+    </div>
+
+    
+
+    <div class="streak-container">
+        <div class="streak-item">
+            <p>🔥 Streak:</p>
+            <span>x</span>
+        </div>
+    </div>
+
+    <div class="profile-actions">
+
+        <!-- SETTINGS SECTION -->
+        <div class="profile-settings">
+            <p class="section-title">Settings</p>
+            <div class="action-item" @onclick="OpenEditProfile">
+                <img src="images/icons/profile/edit.png" alt="Edit" />
+                <span>Edit Profile</span>
+            </div>
+            <div class="action-item" @onclick="OpenChangePassword">
+                <img src="images/icons/profile/password.png" alt="Password" />
+                <span>Change Password</span>
+            </div>
+            <div class="action-item" @onclick="OpenPreferences">
+                <img src="images/icons/profile/settings.png" alt="Settings" />
+                <span>Preferences</span>
+            </div>
+        </div>
+
+        <!-- SOCIAL SHARING SECTION -->
+        <div class="profile-sharing">
+            <p class="section-title">Share Your Progress</p>
+            <div class="social-icons">
+                <img src="images/icons/profile/fb.png" alt="Facebook" @onclick='() => Share("facebook")' />
+                <img src="images/icons/profile/x.png" alt="Twitter" @onclick='() => Share("twitter")' />
+                <img src="images/icons/profile/whatsapp.png" alt="WhatsApp" @onclick='() => Share("whatsapp")' />
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    void OpenEditProfile()
+    {
+        // Navigate to Edit Profile page or open modal
+        Nav.NavigateTo("/edit-profile");
+    }
+
+    void OpenChangePassword()
+    {
+        Nav.NavigateTo("/change-password");
+    }
+
+    void OpenPreferences()
+    {
+        Nav.NavigateTo("/preferences");
+    }
+
+    void Share(string platform)
+    {
+        // You can add actual sharing logic here
+        Console.WriteLine($"Sharing to {platform}");
+    }
+}

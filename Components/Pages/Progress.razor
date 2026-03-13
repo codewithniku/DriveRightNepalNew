@@ -1,0 +1,83 @@
+﻿@page "/progress"
+@inherits MainLayout
+@inject IJSRuntime JS
+
+<head>
+    <link href="css/progress.css" rel="stylesheet" />
+</head>
+
+<div class="main-container">
+    <div class="header-container">
+        <span class="header-title">My Progress</span>
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-card">
+        
+            <h2 class="title">Your Progress</h2>
+
+            <!-- Circular Progress -->
+            <div class="progress-circle">
+                <div class="inner-circle">
+                    <span class="percentage">75%</span>
+                </div>
+            </div>
+
+            <!-- Lessons Info -->
+            <div class="lesson-info">
+                <span class="completed">9</span>
+                <span>out of</span>
+                <span class="total">12</span>
+                <span>Lessons Completed</span>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="chapter-progress">
+        <p class="chapter-title">Chapter Progress:</p>
+
+        <div class="chapters-container">
+            <div class="chapter-item">
+                <span class="chapter-name">Chapter 1: Traffic Signs</span>
+                <div class="progress-bar">
+                    <div class="progress" style="width: 80%;"></div>
+                </div>
+            </div>
+
+            <div class="chapter-item">
+                <span class="chapter-name">Chapter 2: Road Rules</span>
+                <div class="progress-bar">
+                    <div class="progress" style="width: 100%;"></div>
+                </div>
+            </div>
+
+            <div class="chapter-item">
+                <span class="chapter-name">Chapter 3: Vehicle Safety</span>
+                <div class="progress-bar">
+                    <div class="progress" style="width: 60%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="quiz-chart-card">
+        <p class="chapter-title">Quiz Performance</p>
+        <canvas id="quizChart" width="320" height="300"></canvas>
+    </div>
+    
+</div>
+
+@code {
+    private List<string> Labels = new() { "Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4" };
+    private List<int> QuizScores = new() { 75, 90, 60, 50 };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Task.Delay(300); // ensure DOM ready
+            await JS.InvokeVoidAsync("renderQuizChart", Labels.ToArray(), QuizScores.ToArray());
+        }
+    }
+}

@@ -1,0 +1,115 @@
+﻿@page "/login"
+@using driverightnepal.Core.Models
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.EntityFrameworkCore
+@using driverightnepal.Core.Data
+@layout NormalLayout
+@inject IDbContextFactory<driverightnepal.Core.Data.AppDbContext> DbFactory
+@inject NavigationManager Nav
+@inject driverightnepal.Core.Services.UserStateService UserState
+
+<title>Login</title>
+<head>
+    <link href="css/login.css" rel="stylesheet" />
+</head>
+
+<div class="login-wrapper">
+    <div class="login-container">
+
+        <img src="images/logo.svg" class="login-logo" />
+
+        <p>Welcome back! Please log in to your account.</p>
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <p class="form-message">@message</p>
+        }
+
+        <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <InputText @bind-Value="loginModel.Email" type="email" class="form-input" placeholder="Email address" />
+                <ValidationMessage For="@(() => loginModel.Email)" />
+            </div>
+
+            <div class="form-group">
+                <InputText @bind-Value="loginModel.Password" type="password" class="form-input" placeholder="Password" />
+                <ValidationMessage For="@(() => loginModel.Password)" />
+            </div>
+
+            <div class="form-row">
+                <label class="remember-me">
+                    <InputCheckbox @bind-Value="loginModel.RememberMe" />
+                    <span>Remember me?</span>
+                </label>
+            </div>
+
+            <button type="submit" class="login-btn">Login</button>
+        </EditForm>
+
+        <p class="signup-text">
+            Don't have an account?
+            <NavLink class="signup-link" href="/register">Sign Up</NavLink>
+        </p>
+
+    </div>
+</div>
+
+<footer class="login-footer">
+    © 2026 DriveRight Nepal. All rights reserved.
+</footer>
+
+@code {
+    private LoginModel loginModel = new LoginModel();
+    private string message = string.Empty;
+
+    private async Task HandleLogin()
+    {
+        message = string.Empty;
+
+        try
+        {
+            using var context = await DbFactory.CreateDbContextAsync();
+
+            // 1. Find user by email
+            var user = await context.Users
+                .FirstOrDefaultAsync(u => u.Email == loginModel.Email);
+
+            if (user == null)
+            {
+                message = "Invalid email or password.";
+                return;
+            }
+
+            // 2. Hash the input password to compare
+            var inputHash = HashPassword(loginModel.Password);
+
+            // 3. Compare hashes
+            if (user.PasswordHash == inputHash)
+            {
+                await SecureStorage.Default.SetAsync("logged_in_user_id", user.Id.ToString());
+                UserState.CurrentUser = user;
+                message = "Login successful! Redirecting...";
+                // For now, let's go to a dashboard or home
+                Nav.NavigateTo("/dashboard");
+            }
+            else
+            {
+                message = "Invalid email or password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Error: {ex.Message}";
+        }
+    }
+
+    // Must be the EXACT same logic used in Register.razor
+    private string HashPassword(string password)
+    {
+        using var sha256 = System.Security.Cryptography.SHA256.Create();
+        var bytes = System.Text.Encoding.UTF8.GetBytes(password);
+        var hashBytes = sha256.ComputeHash(bytes);
+        return Convert.ToBase64String(hashBytes);
+    }
+}

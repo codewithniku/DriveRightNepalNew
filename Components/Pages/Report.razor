@@ -1,0 +1,148 @@
+﻿@page "/violation"
+@inject NavigationManager Nav
+@layout NormalLayout
+
+<head>
+    <link href="css/report.css" rel="stylesheet" />
+</head>
+
+<div class="main-container">
+
+    <!-- Header -->
+    <div class="header-container">
+        <button class="back-btn" @onclick="GoBack">
+            <img src="images/icons/BackTo.png" alt="Back" />
+        </button>
+        <span class="header-title">Report Violation</span>
+        <span class="header-subtitle">Help make Nepal roads safer 🚦</span>
+    </div>
+
+    <!-- Form -->
+    <div class="form-container">
+
+        <!-- Upload Section -->
+        <div class="form-group">
+            <label>Upload Photo or Video *</label>
+            <InputFile OnChange="HandleFileUpload" accept="image/*,video/*" />
+        </div>
+
+        <!-- Violation Type -->
+        <div class="form-group">
+            <label>Violation Type *</label>
+            <select class="form-control" @bind="ViolationType">
+                <option value="">-- Select Violation --</option>
+                <option>Red Light Violation</option>
+                <option>Over Speeding</option>
+                <option>Illegal Parking</option>
+                <option>Wrong Lane Driving</option>
+                <option>No Helmet</option>
+                <option>Drunk Driving</option>
+                <option>Reckless Driving</option>
+                <option>Driving While Using Phone</option>
+                <option>Other</option>
+            </select>
+        </div>
+
+        <!-- Location -->
+        <div class="form-group">
+            <label>Location *</label>
+            <input type="text" class="form-control" placeholder="Fetching location..." @bind="LocationAddress" />
+            <button class="location-btn" @onclick="GetCurrentLocation">Use Current Location</button>
+        </div>
+
+        <!-- Date & Time -->
+        <div class="row-group">
+            <div class="form-group">
+                <input type="date" class="form-control"
+                       @bind="IncidentDateTime"
+                       @bind:format="yyyy-MM-dd" />
+            </div>
+
+            <div class="form-group">
+                <input type="time" class="form-control"
+                       @bind="IncidentDateTime"
+                       @bind:format="HH:mm" />
+            </div>
+        </div>
+
+        <!-- Vehicle Details -->
+        <div class="section-title">Vehicle Details</div>
+
+        <div class="form-group">
+            <label>Vehicle Number *</label>
+            <input type="text" class="form-control" placeholder="BA 2 CHA 1234" @bind="VehicleNumber" />
+        </div>
+
+        <div class="form-group">
+            <label>Vehicle Color</label>
+            <input type="text" class="form-control" placeholder="e.g. Red, Black" @bind="VehicleColor" />
+        </div>
+
+        <div class="form-group">
+            <label>Vehicle Type</label>
+            <select class="form-control" @bind="VehicleType">
+                <option value="">-- Select Type --</option>
+                <option>Motorcycle</option>
+                <option>Car</option>
+                <option>Bus</option>
+                <option>Truck</option>
+                <option>Taxi</option>
+                <option>Other</option>
+            </select>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+            <label>Additional Details</label>
+            <textarea class="form-control" rows="4"
+                      placeholder="Describe what happened..."
+                      @bind="Description"></textarea>
+        </div>
+
+        <!-- Urgency Toggle -->
+        <div class="form-group checkbox-group">
+            <input type="checkbox" @bind="IsUrgent" />
+            <label>Mark as Urgent 🚨</label>
+        </div>
+
+        <!-- Submit Button -->
+        <button class="submit-btn" @onclick="SubmitReport">
+            Submit Report
+        </button>
+
+    </div>
+
+</div>
+
+@code {
+    void GoBack()
+    {
+        Nav.NavigateTo("/");
+    }
+
+    private string? ViolationType;
+    private string? LocationAddress;
+    private DateTime IncidentDateTime = DateTime.Now;
+    private string? VehicleNumber;
+    private string? VehicleColor;
+    private string? VehicleType;
+    private string? Description;
+    private bool IsUrgent;
+
+    private async Task HandleFileUpload(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        // You can store file stream or upload to server here
+    }
+
+    private async Task GetCurrentLocation()
+    {
+        // Later: Use Geolocation.Default.GetLocationAsync()
+        LocationAddress = "Current GPS Location (Latitude, Longitude)";
+    }
+
+    private async Task SubmitReport()
+    {
+        // Validation + Save to DB
+    }
+}

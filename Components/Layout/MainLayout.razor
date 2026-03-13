@@ -1,0 +1,122 @@
+﻿@inherits LayoutComponentBase
+@using Microsoft.Maui.Devices
+@using driverightnepal.Core.Services
+@inject UserStateService UserState
+@inject NavigationManager Nav
+
+<div class="main-layout @ActiveTheme">
+    <div class="safe-area">
+        @if (isLoading)
+        {
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh;">
+                <img src="images/logo.svg" style="width: 120px; margin-bottom: 20px;" />
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+                <p style="margin-top: 15px; color: #666; font-weight: 500;">Loading...</p>
+            </div>
+        }
+        else
+        {
+            @Body
+        }
+    </div>
+
+    @* Bottom nav only shows if we have a user (prevents it showing on Login/Register) *@
+    @if (UserState.IsLoggedIn)
+    {
+        <div class="bottom-nav">
+            <div class="nav-item @(IsActive("/dashboard") ? "active" : "")"
+                 @onclick='() => NavigateTo("/dashboard")'>
+                <div class="nav-inner">
+                    <img src="images/icons/navigations/Home.png" alt="Home" />
+                </div>
+            </div>
+
+            <div class="nav-item @(IsActive("/quiz") ? "active" : "")"
+                 @onclick='() => NavigateTo("/quiz")'>
+                <div class="nav-inner">
+                    <img src="images/icons/navigations/Tests.png" alt="Quiz" />
+                </div>
+            </div>
+
+            @if (DeviceInfo.Current.Idiom == DeviceIdiom.Desktop)
+            {
+                <div class="nav-item @(IsActive("/admin") ? "active" : "")"
+                     @onclick='() => NavigateTo("/admin")'
+                     style="background: rgba(255, 215, 0, 0.1); border-radius: 12px;">
+                    <div class="nav-inner">
+                        <span class="oi oi-shield" style="color: #f1c40f; font-size: 1.4rem;"></span>
+                    </div>
+                </div>
+            }
+
+            <div class="nav-item @(IsActive("/progress") ? "active" : "")"
+                 @onclick='() => NavigateTo("/progress")'>
+                <div class="nav-inner">
+                    <img src="images/icons/navigations/Progress.png" alt="Progress" />
+                </div>
+            </div>
+
+            <div class="nav-item @(IsActive("/profile") ? "active" : "")"
+                 @onclick='() => NavigateTo("/profile")'>
+                <div class="nav-inner">
+                    <img src="images/icons/navigations/Profile.png" alt="Profile" />
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .safe-area {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: 80px;
+    }
+
+    .oi-shield {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+
+@code {
+    private string currentPath = "";
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdatePath();
+        Nav.LocationChanged += (_, __) => UpdatePath();
+
+        // Small delay to let the UI settle
+        await Task.Delay(300);
+        
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    void UpdatePath()
+    {
+        currentPath = Nav.Uri.Replace(Nav.BaseUri, "/");
+        if (currentPath.Length > 1 && currentPath.EndsWith("/"))
+            currentPath = currentPath.TrimEnd('/');
+        else if (string.IsNullOrEmpty(currentPath))
+            currentPath = "/";
+
+        StateHasChanged();
+    }
+
+    bool IsActive(string url) => currentPath == url;
+
+    string ActiveTheme => currentPath switch
+    {
+        "/dashboard" => "theme-home",
+        "/quiz" => "theme-quiz",
+        "/progress" => "theme-progress",
+        "/profile" => "theme-profile",
+        "/admin" => "theme-admin",
+        _ => ""
+    };
+
+    void NavigateTo(string url) => Nav.NavigateTo(url);
+}

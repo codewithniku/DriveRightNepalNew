@@ -1,0 +1,80 @@
+﻿@page "/emergency"
+@inject NavigationManager Nav
+
+@using Microsoft.Maui.ApplicationModel
+
+<link href="css/emergency.css" rel="stylesheet" />
+
+<div class="main-container">
+
+    <!-- HEADER -->
+    <div class="header-container">
+        <button class="back-btn" @onclick="GoBack">
+            <img src="images/icons/BackTo.png" alt="Back" />
+        </button>
+
+        <span class="header-title">Emergency Services</span>
+    </div>
+
+    <!-- EMERGENCY CARDS -->
+    <div class="emergency-container">
+
+        <!-- Police -->
+        <div class="emergency-card" @onclick="@(() => CallNumber("100"))">
+            <div class="card-left">
+                <span class="contact-name">Police</span>
+                <span class="contact-number">100</span>
+            </div>
+
+            <div class="card-right">
+                <img src="images/icons/emergency/call.png" class="call-icon" />
+            </div>
+        </div>
+
+        <!-- Fire -->
+        <div class="emergency-card" @onclick="@(() => CallNumber("101"))">
+            <div class="card-left">
+                <span class="contact-name">Fire Brigade</span>
+                <span class="contact-number">101</span>
+            </div>
+
+            <div class="card-right">
+                <img src="images/icons/emergency/call.png" class="call-icon" />
+            </div>
+        </div>
+
+        <!-- Ambulance -->
+        <div class="emergency-card" @onclick="@(() => CallNumber("102"))">
+            <div class="card-left">
+                <span class="contact-name">Ambulance</span>
+                <span class="contact-number">102</span>
+            </div>
+
+            <div class="card-right">
+                <img src="images/icons/emergency/call.png" class="call-icon" />
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+
+    async Task CallNumber(string number)
+    {
+        try
+        {
+            await Launcher.Default.OpenAsync($"tel:{number}");
+        }
+        catch
+        {
+            Console.WriteLine("Calling not supported on this device.");
+        }
+    }
+
+    void GoBack()
+    {
+        Nav.NavigateTo("/");
+    }
+}

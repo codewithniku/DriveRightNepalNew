@@ -1,0 +1,221 @@
+﻿body {
+    padding: 0;
+    margin: 0;
+    font-family: Poppins;
+}
+
+.main-container {
+    min-height: 100vh;
+    background-color: #F0FDF4;
+    display: flex;
+    flex-direction: column;
+}
+
+.header-container {
+    background-color: #009132;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0 0 20px 20px;
+    position: relative;
+    padding: 0 20px;
+}
+
+.header-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 25px;
+    color: white;
+    font-weight: 600;
+}
+
+
+.profile-card {
+    background-color: white;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 290px;
+    margin: -50px auto 0;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    padding: 20px;
+    position: relative;
+    z-index: 10;
+}
+
+.profile-card-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.profile-pic {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #009132;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+}
+
+    .profile-info .name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #222;
+    }
+
+    .profile-info .email {
+        font-size: 14px;
+        color: #777;
+        margin-top: 2px;
+    }
+
+    .profile-info .number {
+        font-size: 14px;
+        color: #777;
+        margin-top: 2px;
+    }
+
+
+.profile-stats {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+    justify-content: center;
+}
+
+.stat-box {
+    background-color: white;
+    padding: 20px 10px;
+    border-radius: 12px;
+    border: 1px solid grey;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    margin-top: 10px;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: black;
+    margin-top: 3px;
+    text-align: center;
+}
+
+.streak-container {
+    margin: 10px auto;
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: white;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    padding: 10px;
+    border-radius: 12px;
+}
+
+.streak-item {
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+    .streak-item p {
+        font-size: 18px;
+    }
+    .streak-item span {
+        font-size: 35px;
+    }
+
+.streak-info {
+    font-size: 25px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-align: center;
+    align-content: center;
+}
+
+
+
+/* ================= ACTIONS ================= */
+
+.profile-actions {
+    width: 90%;
+    max-width: 380px;
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* Section Title */
+.section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 10px;
+}
+
+/* Single Action Item (Settings) */
+.action-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: white;
+    padding: 12px 15px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: background 0.2s;
+    margin: 20px;
+    height: 40px;
+}
+
+    .action-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    .action-item img {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
+        
+    }
+
+    .action-item span {
+        font-size: 14px;
+        font-weight: 500;
+        color: #444;
+    }
+
+/* Social Sharing Icons */
+.profile-sharing{
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+.profile-sharing .social-icons {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+}
+
+    .profile-sharing .social-icons img {
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+        .profile-sharing .social-icons img:hover {
+            transform: scale(1.1);
+        }

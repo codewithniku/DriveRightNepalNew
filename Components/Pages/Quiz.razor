@@ -1,0 +1,94 @@
+﻿@page "/quiz"
+@inject NavigationManager Nav
+
+
+<head>
+    <link href="css/quiz.css" rel="stylesheet" />
+</head>
+
+<div class="main-container">
+    <div class="header-container">
+        <button class="back-btn" @onclick="GoBack">
+            <img src="images/icons/BackTo.png" alt="Back" />
+        </button>
+
+        <span class="header-title">Practice Tests</span>
+
+        <div class="header-stats">
+            <div class="stat-box">
+                <span class="stat-number">8/20</span>
+                <span class="stat-label">Completed</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-number">70%</span>
+                <span class="stat-label">Avg Score</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-number">95%</span>
+                <span class="stat-label">Best Score</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="quizzes-container">
+        @foreach (var quiz in quizList)
+        {
+            <div class="quiz-card">
+                <span class="quiz-title">@quiz.Title</span>
+
+                <div class="quiz-info">
+                    <div class="quiz-info-item">
+                        <img src="images/icons/Goal.png" alt="Questions" />
+                        <span>@quiz.QuestionsCount questions</span>
+                    </div>
+                    <div class="quiz-info-item">
+                        <img src="images/icons/Clock.png" alt="Time" />
+                        <span>@quiz.TimeMinutes mins</span>
+                    </div>
+                    <div class="quiz-info-item">
+                        <img src="images/icons/Trophy.png" alt="High Score" />
+                        <span>@(quiz.HighScore.HasValue ? $"{quiz.HighScore.Value}%" : "-")</span>
+                    </div>
+                </div>
+
+                <div class="quiz-divider"></div>
+
+                <div class="quiz-footer">
+                    <span>@quiz.AttemptedTimes attempts</span>
+                    <button class="quiz-action" @onclick="() => TakeQuiz(quiz)">
+                        @(quiz.AttemptedTimes > 0 ? "Retake Quiz" : "Take Quiz")
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    void GoBack()
+    {
+        Nav.NavigateTo("/");
+    }
+
+    List<Quizz> quizList = new List<Quizz>
+    {
+        new Quizz { Title="Traffic Signs Quiz", QuestionsCount=20, TimeMinutes=15, HighScore=80, AttemptedTimes=1 },
+        new Quizz { Title="Road Rules Quiz", QuestionsCount=15, TimeMinutes=10, HighScore=null, AttemptedTimes=0 },
+        new Quizz { Title="Safety Tips Quiz", QuestionsCount=10, TimeMinutes=5, HighScore=90, AttemptedTimes=0 },
+    };
+
+    void TakeQuiz(Quizz quiz)
+    {
+        // Navigate to quiz page
+        // Nav.NavigateTo($"/quiz/{quiz.Title}");
+    }
+
+    public class Quizz
+    {
+        public string Title { get; set; } = "";
+        public int QuestionsCount { get; set; }
+        public int TimeMinutes { get; set; }
+        public int? HighScore { get; set; }
+        public int AttemptedTimes { get; set; }
+    }
+}

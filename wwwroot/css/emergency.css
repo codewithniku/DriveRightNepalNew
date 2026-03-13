@@ -1,0 +1,109 @@
+﻿body {
+    padding: 0;
+    margin: 0;
+    font-family: Poppins;
+}
+
+.main-container {
+    min-height: 100vh;
+    background-color: #F0FDF4;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 80px;
+}
+
+.header-container {
+    background-color: #DB944B;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0 0 20px 20px;
+    position: relative;
+    padding: 0 20px;
+}
+
+.header-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 25px;
+    color: white;
+    font-weight: 600;
+}
+
+.back-btn {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+    .back-btn img {
+        width: 30px;
+        height: 30px;
+        object-fit: contain;
+    }
+
+    .back-btn:active {
+        opacity: 0.7;
+    }
+
+
+/* ================= EMERGENCY CONTAINER ================= */
+
+.emergency-container {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.emergency-container {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.emergency-card {
+    background-color: white;
+    border-radius: 18px;
+    padding: 18px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    transition: 0.2s ease;
+}
+
+    .emergency-card:active {
+        transform: scale(0.97);
+    }
+
+.card-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.contact-name {
+    font-size: 17px;
+    font-weight: 600;
+    color: #222;
+}
+
+.contact-number {
+    font-size: 14px;
+    color: #777;
+}
+
+.call-icon {
+    width: 28px;
+    height: 28px;
+}

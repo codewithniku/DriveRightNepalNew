@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="../driverightnepal.Admin/driverightnepal.Admin.csproj" Id="a44dc5af-bdc1-494c-b912-65a52e9b3588" />
+  <Project Path="../driverightnepal.Core/driverightnepal.Core.csproj" Id="2929a0e5-6dca-4e1f-ba11-2626c9d2a8fb" />
+  <Project Path="driverightnepal.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
+</Solution>

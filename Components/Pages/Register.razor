@@ -1,0 +1,142 @@
+﻿@page "/register"
+@using driverightnepal.Core.Models
+@using Microsoft.EntityFrameworkCore
+@using System.ComponentModel.DataAnnotations
+@using driverightnepal.Core.Services
+@layout NormalLayout
+@inject IDbContextFactory<driverightnepal.Core.Data.AppDbContext> DbFactory
+@inject UserStateService UserState
+@inject NavigationManager Nav
+
+<title>Register</title>
+
+<head>
+    <link href="css/signup.css" rel="stylesheet" />
+</head>
+
+<div class="login-wrapper">
+    <div class="login-container">
+        <img src="images/logo.svg" class="login-logo" />
+        <h2>Sign Up</h2>
+        
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <p class="form-message">@message</p>
+        }
+
+        <EditForm Model="@registerModel" OnValidSubmit="HandleRegister">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <InputText @bind-Value="registerModel.FirstName" class="form-input" placeholder="First Name" />
+                <ValidationMessage For="@(() => registerModel.FirstName)" />
+            </div>
+
+            <div class="form-group">
+                <InputText @bind-Value="registerModel.LastName" class="form-input" placeholder="Last Name" />
+                <ValidationMessage For="@(() => registerModel.LastName)" />
+            </div>
+
+            <div class="form-group">
+                <label style="font-size: 0.8rem; color: #666; margin-left: 10px;">Date of Birth</label>
+                <InputDate @bind-Value="registerModel.DOB" class="form-input" />
+                <ValidationMessage For="@(() => registerModel.DOB)" />
+            </div>
+
+            <div class="form-group">
+                <InputText @bind-Value="registerModel.Address" class="form-input" placeholder="Address (City, Province)" />
+                <ValidationMessage For="@(() => registerModel.Address)" />
+            </div>
+
+            <div class="form-group">
+                <InputText @bind-Value="registerModel.Email" type="email" class="form-input" placeholder="Email Address" />
+                <ValidationMessage For="@(() => registerModel.Email)" />
+            </div>
+
+            <div class="form-group">
+                <InputText @bind-Value="registerModel.Password" type="password" class="form-input" placeholder="Enter Password" />
+                <ValidationMessage For="@(() => registerModel.Password)" />
+            </div>
+
+            <div class="form-group">
+                <InputText @bind-Value="registerModel.ConfirmPassword" type="password" class="form-input" placeholder="Confirm Password" />
+                <ValidationMessage For="@(() => registerModel.ConfirmPassword)" />
+            </div>
+
+            <button type="submit" class="login-btn">Register</button>
+
+            <p class="signup-text">
+                Already have an account?
+                <NavLink class="signup-link" href="/login">Login</NavLink>
+            </p>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private RegisterModel registerModel = new RegisterModel { DOB = DateTime.Today.AddYears(-18) };
+    private string message = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        if (UserState.IsLoggedIn)
+        {
+            Nav.NavigateTo("/dashboard");
+        }
+    }
+
+    private async Task HandleRegister()
+    {
+        message = string.Empty;
+
+        // 1️⃣ Password match validation
+        if (registerModel.Password != registerModel.ConfirmPassword)
+        {
+            message = "Passwords do not match.";
+            return;
+        }
+
+        // 2️⃣ Check if email already exists in DB
+        using var context = DbFactory.CreateDbContext();
+        var existingUser = await context.Users.FirstOrDefaultAsync(u => u.Email == registerModel.Email);
+
+        if (existingUser != null)
+        {
+            message = "Email is already registered.";
+            return;
+        }
+
+        // 3️⃣ Hash the password
+        var passwordHash = HashPassword(registerModel.Password);
+
+        // 4️⃣ Create new User entity
+        var user = new driverightnepal.Core.Models.User
+        {
+            FirstName = registerModel.FirstName,
+            LastName = registerModel.LastName,
+            DOB = registerModel.DOB,
+            Address = registerModel.Address,
+            Email = registerModel.Email,
+            PasswordHash = passwordHash,
+            CreatedAt = DateTime.UtcNow,
+            ProfilePicture = null
+        };
+
+        // 5️⃣ Save to DB
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        message = "Registration successful!";
+        // Optional: redirect to login page
+        Nav.NavigateTo("/login");
+    }
+
+    // SHA256 password hashing
+    private string HashPassword(string password)
+    {
+        using var sha256 = System.Security.Cryptography.SHA256.Create();
+        var bytes = System.Text.Encoding.UTF8.GetBytes(password);
+        var hashBytes = sha256.ComputeHash(bytes);
+        return Convert.ToBase64String(hashBytes);
+    }
+}

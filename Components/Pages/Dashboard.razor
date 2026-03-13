@@ -1,0 +1,188 @@
+﻿@page "/dashboard"
+@using driverightnepal.Core.Services
+@using driverightnepal.Core.Models
+@using driverightnepal.Core.Data
+@using Microsoft.EntityFrameworkCore
+@layout MainLayout
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject UserStateService UserState
+@inject NavigationManager Nav
+
+<head>
+    <link href="css/dashboard.css" rel="stylesheet" />
+</head>
+
+@if (UserState.CurrentUser != null)
+{
+    <div class="main-container">
+        <div class="header-container">
+            <div class="header-top">
+                <div class="header-left">
+                    @if (UserState.CurrentUser?.ProfilePicture != null && UserState.CurrentUser.ProfilePicture.Length > 0)
+                    {
+                        <img src="data:image/png;base64,@Convert.ToBase64String(UserState.CurrentUser.ProfilePicture)" class="profile-pic" />
+                    }
+                    else
+                    {
+                        <img src="images/profile.jpg" class="profile-pic" />
+                    }
+    
+                    <div class="user-text">
+                        <p>Welcome back,</p>
+                        <h3>@UserState.CurrentUser?.FirstName</h3>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <button class="icon-btn">🔔</button>
+                </div>
+            </div>
+
+            <div class="header-progress" @onclick="GoToProgress">
+                <span>Progress Overview</span>
+                <div class="progress-text">
+                    @* Dynamic calculation based on DB values *@
+                    <span>@completedCount out of @totalLessons lessons completed</span>
+                    <span class="progress-percent">@Math.Round(overallProgress, 1)%</span>
+                </div>
+
+                <div class="progress-bar">
+                    @* Dynamic fill based on calculated percentage *@
+                    <div class="progress-fill" style="width:@overallProgress%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">Quick Actions</div>
+        <div class="quick-actions">
+            <NavLink href="/lessons" class="action-card">
+                <img src="images/icons/Book.png" alt="Lessons" />
+                <span>Lessons</span>
+                <p>Continue Learning</p>
+            </NavLink>
+            <NavLink href="/quiz" class="action-card">
+                <img src="images/icons/Scorecard.png" alt="Tests" />
+                <span>Practice Tests</span>
+                <p>Test Yourself</p>
+            </NavLink>
+            <NavLink href="/emergency" class="action-card">
+                <img src="images/icons/Emergency.png" alt="Emergency" />
+                <span>Emergency</span>
+                <p>Emergency Services</p>
+            </NavLink>
+            <NavLink href="/mock-exam" class="action-card">
+                <img src="images/icons/Quiz.png" alt="Mock" />
+                <span>Mock Exam</span>
+                <p>Final Preparation</p>
+            </NavLink>
+            <NavLink href="/violation" class="action-card">
+                <img src="images/icons/report.png" alt="Violation" />
+                <span>Report Violation</span>
+                <p>Road Safety</p>
+            </NavLink>
+            <NavLink href="/nearby-services" class="action-card">
+                <img src="images/icons/wrench.png" alt="Services" />
+                <span>Nearby Services</span>
+                <p>Find Workshops</p>
+            </NavLink>
+        </div>
+
+        <div class="section-title">Continue Learning</div>
+        <div class="continue-card">
+            <div class="continue-info">
+                @if (nextLesson != null)
+                {
+                    <p class="chapter-title">@nextLesson.Title</p>
+                    <span class="chapter-sub">Chapter @nextLesson.ChapterNumber</span>
+                }
+                else
+                {
+                    <p class="chapter-title">All Caught Up!</p>
+                    <span class="chapter-sub">You've finished all lessons.</span>
+                }
+            </div>
+    
+            @if (nextLesson != null)
+            {
+                <button class="primary-btn" @onclick='() => Nav.NavigateTo($"/lesson-details/{nextLesson.Id}")'>
+                    Continue
+                </button>
+            }
+            else
+            {
+                <button class="primary-btn" @onclick='() => Nav.NavigateTo("/mock-exam")'>
+                    Take Mock Exam
+                </button>
+            }
+        </div>
+        
+        <button class="logout-link" @onclick="HandleLogout" style="margin-top: 20px; color: #ff4444; background: none; border: none; cursor: pointer;">
+            Logout
+        </button>
+    </div>
+}
+else
+{
+    <div class="loading-screen">
+        <p>Loading your profile...</p>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Safety Check: If no user is in the service, send them back to login
+        if (!UserState.IsLoggedIn)
+        {
+            Nav.NavigateTo("/login");
+        }
+    }
+
+    private double overallProgress = 0;
+    private int totalLessons = 0;
+    private int completedCount = 0;
+    private Lesson? nextLesson;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!UserState.IsLoggedIn)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        using var context = await DbFactory.CreateDbContextAsync();
+    
+        totalLessons = await context.Lessons.CountAsync();
+
+        if (totalLessons > 0)
+        {
+            // 1. Get IDs of lessons this user already finished
+            var completedLessonIds = await context.UserProgress
+                .Where(p => p.UserId == UserState.CurrentUser.Id && p.IsCompleted)
+                .Select(p => p.LessonId)
+                .ToListAsync();
+
+            completedCount = completedLessonIds.Count;
+            overallProgress = (double)completedCount / totalLessons * 100;
+
+            // 2. Find the next lesson (the one with the lowest ChapterNumber that isn't completed)
+            nextLesson = await context.Lessons
+                .Where(l => !completedLessonIds.Contains(l.Id))
+                .OrderBy(l => l.ChapterNumber)
+                .FirstOrDefaultAsync();
+        }
+    }
+
+    private void HandleLogout()
+    {
+        SecureStorage.Default.Remove("logged_in_user_id"); // Clear the saved session
+        UserState.Logout();
+        Nav.NavigateTo("/login");
+    }
+
+    private void GoToProgress()
+    {
+        Nav.NavigateTo("/progress");
+    }
+}

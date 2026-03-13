@@ -1,0 +1,172 @@
+﻿body {
+    padding: 0;
+    margin: 0;
+    font-family: Poppins;
+}
+
+.main-container {
+    min-height: 100vh;
+    background-color: #F0FDF4;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 80px;
+    gap: 30px;
+}
+
+.header-container {
+    background-color: #517FA2;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0 0 20px 20px;
+    position: relative;
+    padding: 0 20px;
+}
+
+.header-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 25px;
+    color: white;
+    font-weight: 600;
+}
+
+.progress-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+/* Progress Card */
+.progress-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 70%;
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid grey;
+    padding: 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Title */
+.title {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* Circular Progress */
+.progress-circle {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 20px auto;
+    border-radius: 50%;
+    background: conic-gradient( #517FA2 0% 75%, #E6F4EA 75% 100% );
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Inner White Circle */
+.inner-circle {
+    width: 140px;
+    height: 140px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Percentage Text */
+.percentage {
+    font-size: 32px;
+    font-weight: bold;
+    color: black;
+}
+
+/* Lesson Info */
+.lesson-info {
+    font-size: 16px;
+    color: black;
+}
+
+    .lesson-info .completed {
+        font-weight: bold;
+        color: #517FA2;
+    }
+
+    .lesson-info .total {
+        font-weight: bold;
+    }
+
+
+.chapter-progress {
+    margin: 0px auto;
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: white;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    padding: 10px;
+    border-radius: 12px;
+}
+
+.chapter-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.chapters-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.chapter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.chapter-name {
+    font-size: 14px;
+    color: #444;
+    font-weight: 500;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress {
+    height: 100%;
+    background-color: #517FA2;
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
+.quiz-chart-card {
+    margin: 0px auto;
+    width: 100%;
+    max-width: 320px;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+
+    .quiz-chart-card canvas {
+        width: 100%;
+        height: 300px;
+    }

@@ -1,0 +1,100 @@
+﻿@page "/lessons"
+@using driverightnepal.Core.Models
+@using driverightnepal.Core.Data
+@using driverightnepal.Core.Services
+@using Microsoft.EntityFrameworkCore
+@layout NormalLayout
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject UserStateService UserState
+@inject NavigationManager Nav
+
+<head>
+    <link href="css/lessons.css" rel="stylesheet" />
+</head>
+
+<div class="main-container">
+    <div class="header-container">
+
+        <button class="back-btn" @onclick="GoBack">
+            <img src="images/icons/BackTo.png" alt="Back" />
+        </button>
+
+        <span class="header-title">Learning Modules</span>
+
+    </div>
+
+    <div class="lessons-container">
+        @foreach (var lesson in lessonList)
+        {
+            <div class="lesson-card" @onclick="() => OpenLesson(lesson)">
+                <div class="lesson-left">
+                    <img src="@lesson.IconPath" class="lesson-icon" />
+                </div>
+                <div class="lesson-right">
+                    <span class="lesson-title">@lesson.Title</span>
+                    <span class="lesson-questions">@lesson.QuestionsCount questions</span>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width:@lesson.Progress%"></div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+</div>
+
+@code {
+    private List<LessonDisplayModel> lessonList = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        
+        // 1. Get all lessons from DB
+        var dbLessons = await context.Lessons.OrderBy(l => l.ChapterNumber).ToListAsync();
+
+        // 2. Get current user's progress
+        var userProgress = await context.UserProgress
+            .Where(p => p.UserId == UserState.CurrentUser.Id)
+            .ToListAsync();
+
+        // 3. Map DB data to your UI model
+        lessonList = dbLessons.Select(l => new LessonDisplayModel
+        {
+            Id = l.Id,
+            Title = l.Title,
+            // Map icons based on category or title
+            IconPath = GetIconPath(l.Category), 
+            // We'll handle question counts later when we build the Quiz table
+            QuestionsCount = 10, 
+            // Calculate progress: if entry exists in UserProgress and IsCompleted is true, 100%
+            Progress = userProgress.Any(p => p.LessonId == l.Id && p.IsCompleted) ? 100 : 0
+        }).ToList();
+    }
+
+    private string GetIconPath(string? category) => category switch
+    {
+        "Traffic Signs" => "images/icons/TrafficLight.png",
+        "Rules of the Road" => "images/icons/Police.png",
+        "Safety" => "images/icons/Safe.png",
+        _ => "images/icons/SteeringWheel.png"
+    };
+
+    void GoBack() => Nav.NavigateTo("/dashboard");
+
+    void OpenLesson(LessonDisplayModel lesson)
+    {
+        Nav.NavigateTo($"/lesson-details/{lesson.Id}");
+    }
+
+    // A small helper class for the UI
+    public class LessonDisplayModel
+    {
+        public int Id { get; set; }
+        public string IconPath { get; set; } = "";
+        public string Title { get; set; } = "";
+        public int QuestionsCount { get; set; }
+        public int Progress { get; set; }
+    }
+}
+

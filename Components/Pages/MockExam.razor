@@ -1,0 +1,144 @@
+﻿@page "/mock-exam"
+@inject NavigationManager Nav
+
+<head>
+    <link href="css/mockexam.css" rel="stylesheet" />
+</head>
+
+<div class="main-container">
+    <div class="header-container">
+        <button class="back-btn" @onclick="GoBack">
+            <img src="images/icons/BackTo.png" alt="Back" />
+        </button>
+
+        <span class="header-title">Mock Exam</span>
+    </div>
+
+    <div class="mock-containers">
+        <div class="mock-card">
+            <div class="mock-top">
+                <img src="images/icons/Quiz.png" alt="Icon" class="mock-icon" />
+                <span class="mock-title">Full License Exam</span>
+            </div>
+
+            <div class="mock-stats">
+                <div class="stat-box">
+                    <img src="images/icons/mock-exam/Goal.png" alt="Alternate Text" />
+                    <span class="stat-label">50 Questions</span>
+                </div>
+                <div class="stat-box">
+                    <img src="images/icons/mock-exam/Clock.png" alt="Alternate Text" />
+                    <span class="stat-label">45 Mins</span>
+                </div>
+                <div class="stat-box">
+                    <img src="images/icons/mock-exam/Checkmark.png" alt="Alternate Text" />
+                    <span class="stat-label">80% Pass Mark </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mock-detail-container">
+        <div class="mock-detail-card">
+            <span class="mock-detail-title">Exam Structure</span>
+
+            <div class="mock-detail-item">
+                <img src="images/icons/mock-exam/check.png" alt="Check" class="mock-bullet" />
+                <div class="mock-detail-text">
+                    <span class="item-title">Traffic Signs</span>
+                    <span class="item-subtext">10 questions</span>
+                </div>
+            </div>
+
+            <div class="mock-detail-item">
+                <img src="images/icons/mock-exam/check.png" alt="Check" class="mock-bullet" />
+                <div class="mock-detail-text">
+                    <span class="item-title">Road Safety Rules</span>
+                    <span class="item-subtext">15 questions</span>
+                </div>
+            </div>
+
+            <div class="mock-detail-item">
+                <img src="images/icons/mock-exam/check.png" alt="Check" class="mock-bullet" />
+                <div class="mock-detail-text">
+                    <span class="item-title">Speed Limits</span>
+                    <span class="item-subtext">10 questions</span>
+                </div>
+            </div>
+
+            <div class="mock-detail-item">
+                <img src="images/icons/mock-exam/check.png" alt="Check" class="mock-bullet" />
+                <div class="mock-detail-text">
+                    <span class="item-title">Emergency and First Aid</span>
+                    <span class="item-subtext">5 questions</span>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="mock-detail-card">
+            <span class="mock-detail-title">Important Instructions:</span>
+
+            <div class="mock-detail-item">
+                <img src="images/icons/mock-exam/1.png" alt="Check" class="mock-bullet" />
+                <div class="mock-detail-text">
+                    <span class="item-title">
+                        This is a full-length mock exam
+                        simulating the actual license test.
+                    </span>
+                </div>
+            </div>
+
+            <div class="mock-detail-item">
+                <img src="images/icons/mock-exam/2.png" alt="Check" class="mock-bullet" />
+                <div class="mock-detail-text">
+                    <span class="item-title">
+                        You must complete all 50 questions
+                        within 45 minutes.
+                    </span>
+                </div>
+            </div>
+
+            <div class="mock-detail-item">
+                <img src="images/icons/mock-exam/3.png" alt="Check" class="mock-bullet" />
+                <div class="mock-detail-text">
+                    <span class="item-title">
+                        You can mark questions for review and
+                        return to them later.
+                    </span>
+                </div>
+            </div>
+
+            <div class="mock-detail-item">
+                <img src="images/icons/mock-exam/4.png" alt="Check" class="mock-bullet" />
+                <div class="mock-detail-text">
+                    <span class="item-title">
+                        You need at least 80% (40/50) to pass
+                        this exam.
+                    </span>
+                </div>
+            </div>
+
+            <div class="mock-detail-item">
+                <img src="images/icons/mock-exam/5.png" alt="Check" class="mock-bullet" />
+                <div class="mock-detail-text">
+                    <span class="item-title">
+                        Exam will auto-submit when time runs
+                        out.
+                    </span>
+                </div>
+            </div>
+
+        </div>
+        <button class="primary-btn">Start Mock Exam</button>
+    </div>
+
+    
+</div>
+
+@code {
+    void GoBack()
+    {
+        Nav.NavigateTo("/");
+    }
+}

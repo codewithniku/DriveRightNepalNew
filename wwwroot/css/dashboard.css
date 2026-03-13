@@ -1,0 +1,223 @@
+﻿body {
+    padding: 0px;
+    margin: 0px;
+    font-family: Poppins;
+}
+
+/* Main Page Layout */
+.main-container {
+    min-height: 100vh;
+    background-color: #F0FDF4;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 80px;
+}
+
+/* ================= HEADER ================= */
+
+.header-container {
+    background-color: #009132;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    min-height: 200px;
+    display: flex;
+    flex-direction: column; /* IMPORTANT FIX */
+    justify-content: space-between;
+}
+
+/* Top Row */
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30px;
+}
+
+/* LEFT SIDE */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Profile Image */
+.profile-pic {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+}
+
+/* Text */
+.user-text {
+    display: flex;
+    flex-direction: column;
+}
+
+    .user-text p {
+        margin: 0;
+        font-size: 14px;
+        color: white;
+        letter-spacing: 0.5px;
+    }
+
+    .user-text h3 {
+        margin: 2px 0 0 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: white;
+    }
+
+/* Notification */
+.header-right {
+    font-size: 20px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+    .header-right:hover {
+        transform: scale(1.15);
+    }
+
+    .header-right button {
+        background: transparent;
+        border: none;
+        font-size: 20px;
+    }
+
+/* ===== Progress Inside Header ===== */
+
+.header-progress {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 2px solid white;
+    padding: 10px;
+    background-color: rgba(128, 128, 128, 0.5);
+    color: white;
+    border-radius: 10px;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: white;
+}
+
+.progress-percent {
+    font-weight: 600;
+}
+
+/* Progress Bar */
+.progress-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: white;
+    border-radius: 10px;
+}
+
+/* ================= QUICK ACTIONS ================= */
+
+.section-title {
+    margin-top: 25px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: black;
+    padding-left: 20px;
+}
+
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 20px;
+}
+
+.quick-actions img{
+    height: 65px;
+    width: 65px;
+}
+
+.action-card {
+    text-decoration: none;
+    color: inherit;
+    background: white;
+    padding: 20px;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: 0.2s ease;
+}
+
+    .action-card span {
+        margin-top: 6px;
+        font-size: 20px;
+    }
+
+    .action-card p {
+        font-size: 10px;
+        opacity: 50%;
+    }
+
+    .action-card:hover {
+        transform: translateY(-3px);
+    }
+
+/* ================= CONTINUE CARD ================= */
+
+.continue-card {
+    background: white;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    border-radius: 16px;
+    margin-top: 20px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    margin: 20px;
+}
+
+.primary-btn {
+    margin-top: 12px;
+    padding: 10px 16px;
+    border: none;
+    background-color: #009132;
+    padding: 15px;
+    font-size: 15px;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 600px) {
+
+    .header-container {
+        padding: 16px;
+        border-radius: 0px 0px 10px 10px;
+    }
+
+    .user-text h3 {
+        font-size: 18px;
+    }
+
+    .profile-pic {
+        width: 40px;
+        height: 40px;
+    }
+}

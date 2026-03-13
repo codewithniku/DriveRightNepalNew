@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>driverightnepal</title>
+    <base href="/" />
+    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="app.css" />
+    <link rel="stylesheet" href="driverightnepal.styles.css" />
+    <link rel="icon" href="data:,">
+</head>
+
+<body>
+
+    <div class="status-bar-safe-area"></div>
+
+    <div id="app">Loading...</div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/progress.js"></script>
+
+
+    <div id="blazor-error-ui" data-nosnippet>
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+
+    <script src="_framework/blazor.webview.js" autostart="false"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        window.renderPdf = (base64Data, wrapperId) => {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+            var binary_string = window.atob(base64Data);
+            var bytes = new Uint8Array(binary_string.length);
+            for (var i = 0; i < binary_string.length; i++) { bytes[i] = binary_string.charCodeAt(i); }
+
+            var loadingTask = pdfjsLib.getDocument({ data: bytes });
+            loadingTask.promise.then(function (pdf) {
+                var wrapper = document.getElementById(wrapperId);
+                wrapper.innerHTML = ''; // Clear "Loading..." text or old canvases
+
+                // Loop through every page
+                for (var i = 1; i <= pdf.numPages; i++) {
+                    renderPage(pdf, i, wrapper);
+                }
+            });
+
+            function renderPage(pdf, pageNumber, wrapper) {
+                pdf.getPage(pageNumber).then(function (page) {
+                    var viewport = page.getViewport({ scale: 1 });
+                    var scale = wrapper.clientWidth / viewport.width;
+                    var scaledViewport = page.getViewport({ scale: scale });
+
+                    var canvas = document.createElement('canvas');
+                    canvas.style.display = "block";
+                    canvas.style.marginBottom = "10px"; // Space between pages
+                    var context = canvas.getContext('2d');
+                    canvas.height = scaledViewport.height;
+                    canvas.width = scaledViewport.width;
+
+                    wrapper.appendChild(canvas);
+
+                    page.render({ canvasContext: context, viewport: scaledViewport });
+                });
+            }
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,135 @@
+﻿@page "/lesson-details/{LessonId:int}"
+@using driverightnepal.Core.Models
+@using driverightnepal.Core.Data
+@using driverightnepal.Core.Services
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject UserStateService UserState
+@inject NavigationManager Nav
+@inject ConfigService Config
+@inject IJSRuntime JS
+
+<head>
+    <link href="css/lessondetails.css" rel="stylesheet" />
+</head>
+
+<div class="details-container full-height">
+    @if (lesson == null)
+    {
+        <div class="loading">Loading content...</div>
+    }
+    else
+    {
+        @* Header only contains the back button *@
+        <div class="header-minimal">
+            <button class="back-btn" @onclick='() => Nav.NavigateTo("/lessons")'>← Back</button>
+        </div>
+
+        <div class="content-scroll-area">
+            @if (!string.IsNullOrEmpty(lesson.PdfUrl))
+            {
+                @* Changed from <canvas> to a container <div> for multi-page support *@
+                <div id="pdf-render-container" class="pdf-wrapper">
+                    <div class="text-center p-3">Loading lesson pages...</div>
+                </div>
+            }
+            else
+            {
+                <div class="html-content p-3">
+                    @((MarkupString)lesson.Content)
+                </div>
+            }
+
+            @* Navigation and completion button at the very bottom of the scroll *@
+            <div class="finish-section">
+                @if (isCompleted)
+                {
+                    <button class="completed-btn" disabled>
+                        <span class="oi oi-check"></span> Lesson Completed
+                    </button>
+                }
+                else
+                {
+                    <button class="finish-btn" @onclick="MarkAsDone">
+                        Finish Lesson
+                    </button>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int LessonId { get; set; }
+    private Lesson? lesson;
+    private bool isCompleted = false;
+
+    // HttpClient configured to handle local development SSL certificates
+    private HttpClient _http = new HttpClient(new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+    });
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        
+        lesson = await context.Lessons.FindAsync(LessonId);
+
+        if (UserState.CurrentUser != null)
+        {
+            isCompleted = await context.UserProgress.AnyAsync(p =>
+                p.UserId == UserState.CurrentUser.Id &&
+                p.LessonId == LessonId &&
+                p.IsCompleted);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // We trigger the PDF render after the component has painted the container div
+        if (firstRender && lesson != null && !string.IsNullOrEmpty(lesson.PdfUrl))
+        {
+            try
+            {
+                // 1. Fetch file as bytes via C# to bypass browser security restrictions
+                var fullUrl = $"https://10.0.2.2:7188{lesson.PdfUrl}";
+                var pdfBytes = await _http.GetByteArrayAsync(fullUrl);
+                
+                // 2. Convert to Base64 to bridge into JavaScript
+                var base64 = Convert.ToBase64String(pdfBytes);
+
+                // 3. Invoke the updated JS function that handles multiple pages
+                await JS.InvokeVoidAsync("renderPdf", base64, "pdf-render-container");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading PDF: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task MarkAsDone()
+    {
+        if (UserState.CurrentUser == null) return;
+
+        using var context = await DbFactory.CreateDbContextAsync();
+
+        var progress = new UserProgress
+        {
+            UserId = UserState.CurrentUser.Id,
+            LessonId = LessonId,
+            IsCompleted = true,
+            CompletedAt = DateTime.UtcNow
+        };
+
+        context.UserProgress.Add(progress);
+        await context.SaveChangesAsync();
+
+        isCompleted = true;
+        StateHasChanged();
+        
+        await Task.Delay(1000);
+        Nav.NavigateTo("/lessons");
+    }
+}
