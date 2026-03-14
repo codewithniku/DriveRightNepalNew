@@ -1,45 +1,65 @@
-﻿body {
+﻿/* ================= GLOBAL & LAYOUT ================= */
+body {
     padding: 0;
     margin: 0;
-    font-family: Poppins;
+    font-family: 'Poppins', sans-serif;
 }
 
 .main-container {
     min-height: 100vh;
-    background-color: #F0FDF4;
+    background-color: #F0FDF4; /* Light green theme */
     display: flex;
     flex-direction: column;
+    padding-bottom: 100px; /* Space for bottom nav */
 }
 
+/* ================= SYNCHRONIZED HEADER ================= */
 .header-container {
     background-color: #009132;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    min-height: 200px;
+    min-height: 180px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0 0 20px 20px;
+    border-radius: 0 0 30px 30px;
     position: relative;
     padding: 0 20px;
 }
 
-.header-title {
+.nav-header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+}
+
+.back-icon {
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
     position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 25px;
+    left: 0;
+    z-index: 10;
+    filter: brightness(0) invert(1); /* Makes black icon white */
+}
+
+.header-title {
+    flex: 1;
+    text-align: center;
+    font-size: 22px;
     color: white;
     font-weight: 600;
 }
 
-
+/* ================= PROFILE CARD (OVERLAP) ================= */
 .profile-card {
     background-color: white;
     border-radius: 20px;
     width: 90%;
-    max-width: 290px;
-    margin: -50px auto 0;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    max-width: 320px;
+    margin: -60px auto 0;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     padding: 20px;
     position: relative;
     z-index: 10;
@@ -51,9 +71,15 @@
     gap: 15px;
 }
 
+.profile-pic-container {
+    position: relative;
+    width: 80px;
+    height: 80px;
+}
+
 .profile-pic {
-    width: 70px;
-    height: 70px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     object-fit: cover;
     border: 3px solid #009132;
@@ -70,94 +96,186 @@
         color: #222;
     }
 
-    .profile-info .email {
-        font-size: 14px;
-        color: #777;
-        margin-top: 2px;
-    }
-
+    .profile-info .email,
     .profile-info .number {
-        font-size: 14px;
-        color: #777;
+        font-size: 13px;
+        color: #666;
         margin-top: 2px;
     }
 
-
+/* ================= STATISTICS GRID ================= */
 .profile-stats {
     display: flex;
-    gap: 15px;
-    margin-top: 10px;
+    gap: 12px;
+    margin-top: 20px;
     justify-content: center;
+    padding: 0 15px;
 }
 
 .stat-box {
     background-color: white;
-    padding: 20px 10px;
-    border-radius: 12px;
-    border: 1px solid grey;
+    padding: 15px 5px;
+    border-radius: 15px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 80px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-    margin-top: 10px;
+    flex: 1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0f2f1;
 }
 
 .stat-label {
-    font-size: 14px;
-    color: black;
-    margin-top: 3px;
+    font-size: 11px;
+    color: #777;
     text-align: center;
+    font-weight: 500;
+    text-transform: uppercase;
 }
 
+.stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #009132;
+    margin-top: 5px;
+}
+
+/* ================= STREAK SECTION ================= */
 .streak-container {
-    margin: 10px auto;
-    width: 100%;
-    max-width: 320px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    margin: 20px auto;
+    width: 90%;
+    max-width: 340px;
     background: white;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-    padding: 10px;
-    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    padding: 15px;
+    border-radius: 15px;
+    border-left: 5px solid #FF9800;
 }
 
 .streak-item {
-    font-weight: 600;
-    margin-bottom: 10px;
     text-align: center;
 }
 
     .streak-item p {
-        font-size: 18px;
-    }
-    .streak-item span {
-        font-size: 35px;
+        font-size: 14px;
+        color: #555;
+        margin: 0;
+        font-weight: 600;
     }
 
-.streak-info {
-    font-size: 25px;
-    font-weight: 600;
-    margin-bottom: 10px;
-    text-align: center;
-    align-content: center;
+    .streak-item span {
+        font-size: 32px;
+        font-weight: 800;
+        color: #333;
+    }
+
+/* ================= EDIT FORM & INPUTS ================= */
+.edit-form-container {
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
+.edit-pic-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+}
 
+.upload-badge {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: #009132;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
 
-/* ================= ACTIONS ================= */
+    .upload-badge img {
+        width: 14px;
+        height: 14px;
+        filter: brightness(0) invert(1);
+    }
 
+.tap-hint {
+    font-size: 11px;
+    color: #888;
+    margin-top: 8px;
+    font-weight: 500;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+    .input-group label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #666;
+    }
+
+.admin-input {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    font-size: 15px;
+    width: 100%;
+    box-sizing: border-box; /* Ensures padding doesn't break width */
+}
+
+    .admin-input:focus {
+        outline: none;
+        border-color: #009132;
+    }
+
+.save-btn {
+    margin-top: 15px;
+    background-color: #009132;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(0, 145, 50, 0.2);
+    cursor: pointer;
+}
+
+/* ================= VALIDATION & ERRORS ================= */
+.error-banner {
+    background-color: #fee2e2;
+    color: #dc2626;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    border: 1px solid #fecaca;
+    margin-bottom: 10px;
+}
+
+.input-error {
+    border: 1.5px solid #dc2626 !important;
+    background-color: #fffafb;
+}
+
+/* ================= ACTIONS & SOCIAL ================= */
 .profile-actions {
     width: 90%;
     max-width: 380px;
-    margin: 20px auto;
-    display: flex;
-    flex-direction: column;
+    margin: 10px auto;
 }
 
-
-/* Section Title */
 .section-title {
     font-size: 16px;
     font-weight: 600;
@@ -165,57 +283,49 @@
     margin-bottom: 10px;
 }
 
-/* Single Action Item (Settings) */
 .action-item {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 15px;
     background-color: white;
-    padding: 12px 15px;
-    border-radius: 15px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     cursor: pointer;
-    transition: background 0.2s;
-    margin: 20px;
-    height: 40px;
+    margin-bottom: 10px;
+    transition: transform 0.1s;
 }
 
-    .action-item:hover {
-        background-color: #f0f0f0;
+    .action-item:active {
+        transform: scale(0.98);
     }
 
     .action-item img {
-        width: 20px;
-        height: 20px;
-        object-fit: contain;
-        
+        width: 22px;
+        height: 22px;
     }
 
     .action-item span {
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 500;
         color: #444;
     }
 
-/* Social Sharing Icons */
-.profile-sharing{
+.profile-sharing {
     display: flex;
-    align-items: center;
     flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
 }
-.profile-sharing .social-icons {
+
+.social-icons {
     display: flex;
-    flex-direction: row;
-    gap: 30px;
+    gap: 25px;
+    margin-top: 10px;
 }
 
-    .profile-sharing .social-icons img {
-        width: 30px;
-        height: 30px;
+    .social-icons img {
+        width: 35px;
+        height: 35px;
         cursor: pointer;
-        transition: transform 0.2s;
     }
-
-        .profile-sharing .social-icons img:hover {
-            transform: scale(1.1);
-        }

@@ -1,0 +1,121 @@
+﻿@page "/report-details/{ReportId:int}"
+@using driverightnepal.Core.Models
+@using driverightnepal.Core.Data
+@using Microsoft.EntityFrameworkCore
+@layout NormalLayout
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject NavigationManager Nav
+@inject ConfigService Config
+
+<head>
+    <link href="css/report.css" rel="stylesheet" />
+</head>
+
+<div class="main-container">
+    <div class="header-container" style='background-color: @(report?.Status == "Rejected" ? "#E32222" : "#009132")'>
+        <button class="back-btn" @onclick='() => Nav.NavigateTo("/notifications")'>
+            <img src="images/icons/BackTo.png" alt="Back" />
+        </button>
+        <span class="header-title">Report Review</span>
+        <span class="header-subtitle">Status: @report?.Status @(report?.Status == "Resolved" ? "✅" : "❌")</span>
+    </div>
+
+    @if (report != null)
+    {
+        <div class="form-container">
+            <div class="form-group">
+                <label>Evidence Submitted</label>
+                @inject ConfigService Config
+
+                <div class="evidence-preview" style="background: #000; border-radius: 12px; overflow: hidden;">
+                    @if (report.MediaPath?.ToLower().EndsWith(".mp4") == true)
+                    {
+                        <video controls playsinline preload="metadata" style="width: 100%; max-height: 250px; background: #000;">
+                            @* We add the type attribute and a 'fake' extension as a query param to help the player *@
+                            <source src="@($"{Config.BaseUrl}/uploads/{report.MediaPath}?ext=.mp4")" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    }
+                    else
+                    {
+                        <img src="@($"{Config.BaseUrl}/uploads/{report.MediaPath}")" style="width: 100%; max-height: 250px; object-fit: contain;" />
+                    }
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(report.AdminRemarks))
+            {
+                <div class="form-group">
+                    <label style="color: #E32222; font-weight: 700;">Officer Remarks</label>
+                    <div class="form-control" style="background-color: #FFF5F5; border-color: #FEB2B2; color: #C53030; min-height: 50px;">
+                        @report.AdminRemarks
+                    </div>
+                </div>
+            }
+
+            <div class="form-group">
+                <label>Violation Type</label>
+                <div class="form-control" style="background: #f9f9f9;">@report.ViolationType</div>
+            </div>
+
+            <div class="form-group">
+                <label>Location</label>
+                <div class="form-control" style="background: #f9f9f9;">@report.Location</div>
+            </div>
+
+            <div class="row-group">
+                <div class="form-group" style="width: 100%;">
+                    <label>Incident Date & Time</label>
+                    <div class="form-control" style="background: #f9f9f9;">
+                        @report.IncidentDateTime.ToString("MMMM dd, yyyy - hh:mm tt")
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title">Vehicle Details</div>
+
+            <div class="form-group">
+                <label>Vehicle Number</label>
+                <div class="form-control" style="background: #f9f9f9; font-family: monospace; font-weight: bold;">
+                    @report.VehicleNumber
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Vehicle Info</label>
+                <div class="form-control" style="background: #f9f9f9;">
+                    @report.VehicleColor @report.VehicleType
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Your Description</label>
+                <div class="form-control" style="background: #f9f9f9; min-height: 80px;">
+                    @report.Description
+                </div>
+            </div>
+
+            <button class="submit-btn" style='background-color: @(report.Status == "Rejected" ? "#E32222" : "#009132"); box-shadow: none; margin-bottom: 20px;'
+                    @onclick='() => Nav.NavigateTo("/notifications")'>
+                Back to Notifications
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int ReportId { get; set; }
+    private ViolationReport? report;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var ctx = await DbFactory.CreateDbContextAsync();
+        report = await ctx.ViolationReports.FindAsync(ReportId);
+
+        if (report != null && !report.IsRead)
+        {
+            report.IsRead = true;
+            await ctx.SaveChangesAsync();
+        }
+    }
+}

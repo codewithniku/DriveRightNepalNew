@@ -1,5 +1,9 @@
 ﻿@page "/progress"
-@inherits MainLayout
+@using driverightnepal.Core.Models
+@using driverightnepal.Core.Data
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject UserStateService UserState
 @inject IJSRuntime JS
 
 <head>
@@ -11,73 +15,137 @@
         <span class="header-title">My Progress</span>
     </div>
 
-    <div class="progress-container">
-        <div class="progress-card">
-        
-            <h2 class="title">Your Progress</h2>
-
-            <!-- Circular Progress -->
-            <div class="progress-circle">
-                <div class="inner-circle">
-                    <span class="percentage">75%</span>
-                </div>
-            </div>
-
-            <!-- Lessons Info -->
-            <div class="lesson-info">
-                <span class="completed">9</span>
-                <span>out of</span>
-                <span class="total">12</span>
-                <span>Lessons Completed</span>
-            </div>
-
+    @if (isLoading)
+    {
+        <div class="loading-state">
+            <p>Calculating your achievements...</p>
         </div>
-    </div>
+    }
+    else
+    {
+        <div class="progress-container">
+            <div class="progress-card">
+                <h2 class="title">Your Progress</h2>
 
-    <div class="chapter-progress">
-        <p class="chapter-title">Chapter Progress:</p>
-
-        <div class="chapters-container">
-            <div class="chapter-item">
-                <span class="chapter-name">Chapter 1: Traffic Signs</span>
-                <div class="progress-bar">
-                    <div class="progress" style="width: 80%;"></div>
+                <div class="progress-circle" style="background: conic-gradient(#5686E1 @(overallPercentage * 3.6)deg, #e0e0e0 0deg);">
+                    <div class="inner-circle">
+                        <span class="percentage">@overallPercentage%</span>
+                    </div>
                 </div>
-            </div>
 
-            <div class="chapter-item">
-                <span class="chapter-name">Chapter 2: Road Rules</span>
-                <div class="progress-bar">
-                    <div class="progress" style="width: 100%;"></div>
-                </div>
-            </div>
-
-            <div class="chapter-item">
-                <span class="chapter-name">Chapter 3: Vehicle Safety</span>
-                <div class="progress-bar">
-                    <div class="progress" style="width: 60%;"></div>
+                <div class="lesson-info">
+                    <span class="completed">@completedCount</span>
+                    <span>out of</span>
+                    <span class="total">@totalLessonsCount</span>
+                    <span>Lessons Completed</span>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="quiz-chart-card">
-        <p class="chapter-title">Quiz Performance</p>
-        <canvas id="quizChart" width="320" height="300"></canvas>
-    </div>
-    
+        <div class="chapter-progress">
+            <p class="chapter-title">Chapter Progress:</p>
+            <div class="chapters-container">
+                @foreach (var chapter in ChapterStats)
+                {
+                    <div class="chapter-item">
+                        <span class="chapter-name">@chapter.Name</span>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: @chapter.Percentage%;"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="quiz-chart-card">
+            <p class="chapter-title">Recent Quiz Performance</p>
+            @if (QuizScores.Any())
+            {
+                <div class="chart-wrapper">
+                    <canvas id="quizChart"></canvas>
+                </div>
+            }
+            else
+            {
+                <p style="text-align:center; color:#888; padding: 20px;">No quiz attempts yet.</p>
+            }
+        </div>
+    }
 </div>
 
 @code {
-    private List<string> Labels = new() { "Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4" };
-    private List<int> QuizScores = new() { 75, 90, 60, 50 };
+    private bool isLoading = true;
+    private int completedCount;
+    private int totalLessonsCount;
+    private int overallPercentage;
+    
+    private List<ChapterProgressInfo> ChapterStats = new();
+    private List<string> Labels = new();
+    private List<int> QuizScores = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProgressData();
+    }
+
+    private async Task LoadProgressData()
+    {
+        using var ctx = await DbFactory.CreateDbContextAsync();
+        var userId = UserState.CurrentUser?.Id ?? 0;
+
+        // 1. Calculate Overall Progress
+        totalLessonsCount = await ctx.Lessons.CountAsync();
+        var userProgress = await ctx.UserProgress
+            .Where(up => up.UserId == userId && up.IsCompleted)
+            .ToListAsync();
+        
+        completedCount = userProgress.Count;
+        overallPercentage = totalLessonsCount > 0 ? (completedCount * 100 / totalLessonsCount) : 0;
+
+        // 2. Calculate Chapter-wise Progress
+        var allLessons = await ctx.Lessons.ToListAsync();
+        var lessonsByCategory = allLessons.GroupBy(l => l.Category ?? "General");
+
+        ChapterStats = lessonsByCategory.Select(group =>
+        {
+            var totalInChapter = group.Count();
+            var completedInChapter = userProgress.Count(up => group.Any(l => l.Id == up.LessonId));
+            return new ChapterProgressInfo
+            {
+                Name = group.Key,
+                Percentage = totalInChapter > 0 ? (completedInChapter * 100 / totalInChapter) : 0
+            };
+        }).ToList();
+
+        // 3. Load Quiz Performance (Last 5 attempts)
+        var quizAttempts = await ctx.QuizAttempts
+            .Where(qa => qa.UserId == userId)
+            .OrderBy(qa => qa.AttemptDate)
+            .Take(5)
+            .ToListAsync();
+
+        // Generate "1", "2", "3" labels based on the count of attempts
+        Labels = Enumerable.Range(1, quizAttempts.Count)
+                          .Select(i => i.ToString())
+                          .ToList();
+
+        QuizScores = quizAttempts.Select(qa => qa.ScorePercentage).ToList();
+        isLoading = false;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (!isLoading && QuizScores.Any())
         {
-            await Task.Delay(300); // ensure DOM ready
+            // Small delay to ensure Canvas is in DOM
+            await Task.Delay(100);
             await JS.InvokeVoidAsync("renderQuizChart", Labels.ToArray(), QuizScores.ToArray());
         }
+    }
+
+    private class ChapterProgressInfo
+    {
+        public string Name { get; set; } = "";
+        public int Percentage { get; set; }
     }
 }

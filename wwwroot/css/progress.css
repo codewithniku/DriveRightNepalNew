@@ -1,7 +1,7 @@
 ﻿body {
     padding: 0;
     margin: 0;
-    font-family: Poppins;
+    font-family: 'Poppins', sans-serif;
 }
 
 .main-container {
@@ -9,71 +9,70 @@
     background-color: #F0FDF4;
     display: flex;
     flex-direction: column;
-    padding-bottom: 80px;
-    gap: 30px;
+    padding-bottom: 100px; /* Space for bottom nav if you have one */
+    gap: 20px;
 }
 
+/* Header */
 .header-container {
     background-color: #517FA2;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    min-height: 150px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    min-height: 150px; /* Reduced height for better mobile fit */
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 0 0 20px 20px;
-    position: relative;
     padding: 0 20px;
 }
 
 .header-title {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 25px;
+    font-size: 22px;
     color: white;
     font-weight: 600;
 }
 
+/* Progress Card Section */
 .progress-container {
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: 0 15px;
 }
-/* Progress Card */
+
 .progress-card {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 70%;
+    width: 90%; /* Wider for mobile */
+    max-width: 350px;
     background: #ffffff;
     border-radius: 20px;
-    border: 1px solid grey;
     padding: 20px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* Title */
 .title {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: 600;
     color: #333;
 }
 
-/* Circular Progress */
+/* Circular Progress - Background handled by inline style in Razor */
 .progress-circle {
-    width: 150px;
-    height: 150px;
-    margin: 0 auto 20px auto;
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 15px auto;
     border-radius: 50%;
-    background: conic-gradient( #517FA2 0% 75%, #E6F4EA 75% 100% );
     display: flex;
     justify-content: center;
     align-items: center;
+    transition: background 0.5s ease;
 }
 
-/* Inner White Circle */
 .inner-circle {
-    width: 140px;
-    height: 140px;
+    width: 120px;
+    height: 120px;
     background: white;
     border-radius: 50%;
     display: flex;
@@ -81,70 +80,67 @@
     align-items: center;
 }
 
-/* Percentage Text */
 .percentage {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: bold;
-    color: black;
+    color: #333;
 }
 
-/* Lesson Info */
 .lesson-info {
-    font-size: 16px;
-    color: black;
+    font-size: 14px;
+    color: #666;
+    text-align: center;
 }
 
     .lesson-info .completed {
         font-weight: bold;
         color: #517FA2;
+        font-size: 16px;
     }
 
-    .lesson-info .total {
-        font-weight: bold;
-    }
-
-
-.chapter-progress {
-    margin: 0px auto;
-    width: 100%;
-    max-width: 320px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+/* Common Card Style for Chapters and Chart */
+.chapter-progress, .quiz-chart-card {
+    margin: 0 auto;
+    width: 90%;
+    max-width: 350px;
     background: white;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-    padding: 10px;
-    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    border-radius: 15px;
+    box-sizing: border-box;
 }
 
 .chapter-title {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 600;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    color: #333;
+    display: block;
 }
 
+/* Chapter Progress Bars */
 .chapters-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 15px;
 }
 
 .chapter-item {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
 }
 
 .chapter-name {
-    font-size: 14px;
-    color: #444;
+    font-size: 13px;
+    color: #555;
     font-weight: 500;
 }
 
 .progress-bar {
     width: 100%;
-    height: 8px;
-    background-color: #e0e0e0;
+    height: 10px;
+    background-color: #eee;
     border-radius: 10px;
     overflow: hidden;
 }
@@ -153,20 +149,25 @@
     height: 100%;
     background-color: #517FA2;
     border-radius: 10px;
-    transition: width 0.5s ease;
+    transition: width 0.8s ease-in-out;
 }
 
-.quiz-chart-card {
-    margin: 0px auto;
+/* Quiz Chart Styles */
+.chart-wrapper {
+    position: relative;
+    height: 220px; /* FIXED HEIGHT TO STOP STRETCHING */
     width: 100%;
-    max-width: 320px;
-    background: white;
-    padding: 15px;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
 }
 
-    .quiz-chart-card canvas {
-        width: 100%;
-        height: 300px;
-    }
+/* Remove direct canvas sizing as Chart.js will now use the wrapper */
+.quiz-chart-card canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.loading-state {
+    text-align: center;
+    padding: 40px;
+    color: #517FA2;
+    font-weight: 500;
+}

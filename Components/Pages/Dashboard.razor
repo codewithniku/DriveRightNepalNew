@@ -33,9 +33,13 @@
                     </div>
                 </div>
 
-                <div class="header-right">
-                    <button class="icon-btn">🔔</button>
-                </div>
+                <div class="header-right" @onclick='() => Nav.NavigateTo("/notifications")'>
+                    <button class="icon-btn">
+                        🔔 @if(unreadNotifications > 0) {
+                        <span class="notif-badge">@unreadNotifications</span>
+                    }
+                </button>
+            </div>
             </div>
 
             <div class="header-progress" @onclick="GoToProgress">
@@ -115,10 +119,46 @@
                 </button>
             }
         </div>
-        
-        <button class="logout-link" @onclick="HandleLogout" style="margin-top: 20px; color: #ff4444; background: none; border: none; cursor: pointer;">
-            Logout
-        </button>
+
+        <div class="section-title d-flex justify-content-between">
+            <span>My Violation Reports</span>
+            @* This should now work as the route /violation-history exists *@
+            <button class="view-all-link" @onclick='() => Nav.NavigateTo("/violation-history")'>View All</button>
+        </div>
+
+        <div class="reports-summary">
+            @if (myRecentReports == null || !myRecentReports.Any())
+            {
+                <div class="empty-reports">
+                    <p>No reports submitted yet.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var report in myRecentReports)
+                {
+                    <div class="mini-report-card-container">
+                        <div class="mini-report-card">
+                            <div class="report-main">
+                                <span class="report-type">@report.ViolationType</span>
+                                <span class="report-vehicle">@report.VehicleNumber</span>
+                            </div>
+                            <div class="report-status">
+                                <span class="status-dot @report.Status.ToLower()"></span>
+                                <span class="status-text">@report.Status</span>
+                            </div>
+                        </div>
+
+                        @if (report.Status == "Rejected" && !string.IsNullOrEmpty(report.AdminRemarks))
+                        {
+                            <div class="admin-feedback">
+                                <strong>Reason:</strong> @report.AdminRemarks
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
     </div>
 }
 else
@@ -142,6 +182,8 @@ else
     private int totalLessons = 0;
     private int completedCount = 0;
     private Lesson? nextLesson;
+    private List<ViolationReport>? myRecentReports;
+    private int unreadNotifications = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -153,11 +195,10 @@ else
 
         using var context = await DbFactory.CreateDbContextAsync();
     
+        // 1. Existing Progress Logic...
         totalLessons = await context.Lessons.CountAsync();
-
         if (totalLessons > 0)
         {
-            // 1. Get IDs of lessons this user already finished
             var completedLessonIds = await context.UserProgress
                 .Where(p => p.UserId == UserState.CurrentUser.Id && p.IsCompleted)
                 .Select(p => p.LessonId)
@@ -166,19 +207,21 @@ else
             completedCount = completedLessonIds.Count;
             overallProgress = (double)completedCount / totalLessons * 100;
 
-            // 2. Find the next lesson (the one with the lowest ChapterNumber that isn't completed)
             nextLesson = await context.Lessons
                 .Where(l => !completedLessonIds.Contains(l.Id))
                 .OrderBy(l => l.ChapterNumber)
                 .FirstOrDefaultAsync();
         }
-    }
 
-    private void HandleLogout()
-    {
-        SecureStorage.Default.Remove("logged_in_user_id"); // Clear the saved session
-        UserState.Logout();
-        Nav.NavigateTo("/login");
+        // 2. NEW: Fetch latest 3 reports for this user
+        // Note: For now, we match by VehicleNumber or just fetch all
+        // until we add a UserId field to ViolationReport table
+        myRecentReports = await context.ViolationReports
+        .Where(v => v.UserId == UserState.CurrentUser.Id) // Ensure this filter is added
+        .OrderByDescending(v => v.SubmittedAt)
+        .Take(3)
+        .ToListAsync();
+        unreadNotifications = myRecentReports.Count(r => r.Status != "Pending" && !r.IsRead);
     }
 
     private void GoToProgress()

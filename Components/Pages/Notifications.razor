@@ -1,0 +1,107 @@
+﻿@page "/notifications"
+@using driverightnepal.Core.Models
+@using driverightnepal.Core.Data
+@using driverightnepal.Core.Services
+@using Microsoft.EntityFrameworkCore
+@layout NormalLayout
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject UserStateService UserState
+@inject NavigationManager Nav
+
+<head>
+    <link href="css/notifications.css" rel="stylesheet" />
+</head>
+
+<div class="main-container">
+    <div class="header-container">
+        <button class="back-btn" @onclick="GoBack">
+            <img src="images/icons/BackTo.png" alt="Back" />
+        </button>
+        <span class="header-title">Notifications</span>
+    </div>
+
+    <div class="notif-container">
+        @if (notificationList == null || !notificationList.Any())
+        {
+            <div class="empty-state">
+                <img src="images/icons/Safe.png" style="opacity: 0.3; width: 80px;" />
+                <p>No new updates at the moment.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var notif in notificationList)
+            {
+                @* Added @onclick to navigate to details *@
+                <div class="notif-card @(notif.IsRead ? "" : "unread")" @onclick="() => OpenDetails(notif.Id)">
+                    <div class="notif-left">
+                        <img src="@notif.IconPath" class="notif-icon" />
+                        @if (!notif.IsRead)
+                        {
+                            <div class="unread-dot"></div>
+                        }
+                    </div>
+                    <div class="notif-right">
+                        <span class="notif-title">@notif.Title</span>
+                        <span class="notif-subtitle">@notif.VehicleNumber • @notif.DateString</span>
+                        
+                        @if (!string.IsNullOrEmpty(notif.Remarks))
+                        {
+                            <div class="notif-remarks">
+                                <strong>Feedback:</strong> @notif.Remarks
+                            </div>
+                        }
+                    </div>
+                    <div class="status-indicator @notif.Status.ToLower()"></div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private List<NotifDisplayModel> notificationList = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!UserState.IsLoggedIn) return;
+
+        using var ctx = await DbFactory.CreateDbContextAsync();
+        
+        var dbNotifs = await ctx.ViolationReports
+            .Where(v => v.UserId == UserState.CurrentUser.Id && v.Status != "Pending")
+            .OrderByDescending(v => v.SubmittedAt)
+            .ToListAsync();
+
+        notificationList = dbNotifs.Select(n => new NotifDisplayModel
+        {
+            Id = n.Id, // Passed ID for navigation
+            Title = $"Report {n.Status}",
+            VehicleNumber = n.VehicleNumber ?? "N/A",
+            Status = n.Status,
+            Remarks = n.AdminRemarks,
+            DateString = n.SubmittedAt.ToString("MMM dd, yyyy"),
+            IsRead = n.IsRead, // Passed read status
+            IconPath = n.Status == "Resolved" ? "images/icons/Safe.png" : "images/icons/Police.png"
+        }).ToList();
+    }
+
+    void GoBack() => Nav.NavigateTo("/dashboard");
+
+    void OpenDetails(int id)
+    {
+        Nav.NavigateTo($"/report-details/{id}");
+    }
+
+    public class NotifDisplayModel
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = "";
+        public string VehicleNumber { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string Remarks { get; set; } = "";
+        public string DateString { get; set; } = "";
+        public string IconPath { get; set; } = "";
+        public bool IsRead { get; set; }
+    }
+}

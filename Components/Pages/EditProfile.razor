@@ -1,0 +1,204 @@
+﻿@page "/edit-profile"
+@using driverightnepal.Core.Models
+@using driverightnepal.Core.Data
+@using Microsoft.EntityFrameworkCore
+@inject driverightnepal.Core.Services.UserStateService UserState
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject NavigationManager Nav
+@layout NormalLayout
+
+<head>
+    <link href="css/profile.css" rel="stylesheet" />
+</head>
+
+<div class="main-container">
+    <div class="header-container" style="min-height: 150px;">
+        <div class="nav-header">
+            <img src="images/icons/BackTo.png" class="back-icon" @onclick='() => Nav.NavigateTo("/profile")' />
+            <span class="header-title">Edit Profile</span>
+        </div>
+    </div>
+
+    <div class="edit-form-container">
+        @* Profile Picture Section *@
+        <div class="edit-pic-section">
+            <div class="profile-pic-container">
+                @if (editUser.ProfilePicture != null)
+                {
+                    <img src="data:image/png;base64,@Convert.ToBase64String(editUser.ProfilePicture)" class="profile-pic" />
+                }
+                else
+                {
+                    <img src="images/profile.jpg" class="profile-pic" />
+                }
+                <label for="profileUpload" class="upload-badge">
+                    <img src="images/icons/camera.png" alt="Edit" />
+                </label>
+                <InputFile id="profileUpload" OnChange="HandleImage" style="display:none;" />
+            </div>
+            <p class="tap-hint">Tap camera to change photo</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <div class="error-banner">@error</div>
+        }
+
+        @* Personal Information *@
+        <div class="input-group">
+            <label>First Name</label>
+            <input @bind="editUser.FirstName"
+                   class="admin-input @(string.IsNullOrWhiteSpace(editUser.FirstName) && showVal ? "input-error" : "")"
+                   placeholder="Enter first name" />
+        </div>
+
+        <div class="input-group">
+            <label>Last Name</label>
+            <input @bind="editUser.LastName"
+                   class="admin-input @(string.IsNullOrWhiteSpace(editUser.LastName) && showVal ? "input-error" : "")"
+                   placeholder="Enter last name" />
+        </div>
+
+        <div class="input-group">
+            <label>Phone Number</label>
+            <input @bind="editUser.PhoneNumber" type="tel"
+                   class="admin-input @(!IsValidPhone() && showVal ? "input-error" : "")"
+                   placeholder="e.g. 98XXXXXXXX" />
+        </div>
+
+        <div class="input-group">
+            <label>Date of Birth</label>
+            @* The bind:format is critical here to show existing data *@
+            <input type="date"
+                   @bind="editUser.DOB"
+                   @bind:format="yyyy-MM-dd"
+                   class="admin-input @(!IsValidDOB() && showVal ? "input-error" : "")" />
+        </div>
+
+        <div class="input-group">
+            <label>Address</label>
+            <input @bind="editUser.Address"
+                   class="admin-input @(string.IsNullOrWhiteSpace(editUser.Address) && showVal ? "input-error" : "")"
+                   placeholder="City, Street" />
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+
+        @* Password Section *@
+        <div class="input-group">
+            <label>New Password</label>
+            <input @bind="newPassword" type="password"
+                   class="admin-input @(!IsValidPassword() && showVal ? "input-error" : "")"
+                   placeholder="Leave blank to keep current" />
+        </div>
+
+        <div class="input-group">
+            <label>Confirm Password</label>
+            <input @bind="confirmPassword" type="password"
+                   class="admin-input @(confirmPassword != newPassword && showVal ? "input-error" : "")"
+                   placeholder="Confirm new password" />
+        </div>
+
+        <button class="save-btn" @onclick="Save">Save Changes</button>
+    </div>
+</div>
+
+@code {
+    private User editUser = new();
+    private string newPassword = "";
+    private string confirmPassword = "";
+    private string error = "";
+    private bool showVal = false;
+    private byte[]? selectedImage;
+
+    protected override void OnInitialized()
+    {
+        if (UserState.CurrentUser == null)
+        {
+            Nav.NavigateTo("/profile");
+            return;
+        }
+        
+        var u = UserState.CurrentUser;
+
+        // Populate the editUser with current data
+        editUser = new User
+        {
+            Id = u.Id,
+            FirstName = u.FirstName,
+            LastName = u.LastName,
+            PhoneNumber = u.PhoneNumber,
+            ProfilePicture = u.ProfilePicture,
+            DOB = u.DOB, // Ensure the existing date is mapped here
+            Address = u.Address
+        };
+    }
+
+    private bool IsValidPhone() => !string.IsNullOrWhiteSpace(editUser.PhoneNumber) && editUser.PhoneNumber.All(char.IsDigit) && editUser.PhoneNumber.Length >= 10;
+    
+    // Allow null if the DB had null, but if they enter a date, it must be valid
+    private bool IsValidDOB() => editUser.DOB.HasValue && editUser.DOB < DateTime.Now.AddYears(-5);
+
+    private bool IsValidPassword() => string.IsNullOrEmpty(newPassword) || newPassword.Length >= 6;
+
+    private async Task HandleImage(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = await e.File.RequestImageFileAsync("image/png", 300, 300);
+            using var ms = new MemoryStream();
+            await file.OpenReadStream().CopyToAsync(ms);
+            selectedImage = ms.ToArray();
+            editUser.ProfilePicture = selectedImage;
+        }
+        catch { error = "Failed to upload image."; }
+    }
+
+    private async Task Save()
+    {
+        showVal = true;
+        error = "";
+
+        if (string.IsNullOrWhiteSpace(editUser.FirstName) || string.IsNullOrWhiteSpace(editUser.LastName))
+        { error = "Name fields are required."; return; }
+
+        if (!IsValidPhone())
+        { error = "Please enter a valid phone number."; return; }
+
+        if (!IsValidDOB())
+        { error = "Please enter a valid Date of Birth."; return; }
+
+        if (!string.IsNullOrEmpty(newPassword))
+        {
+            if (newPassword.Length < 6) { error = "Password too short."; return; }
+            if (newPassword != confirmPassword) { error = "Passwords mismatch!"; return; }
+        }
+
+        try
+        {
+            using var ctx = await DbFactory.CreateDbContextAsync();
+            var dbUser = await ctx.Users.FindAsync(editUser.Id);
+            
+            if (dbUser != null)
+            {
+                dbUser.FirstName = editUser.FirstName;
+                dbUser.LastName = editUser.LastName;
+                dbUser.PhoneNumber = editUser.PhoneNumber;
+                dbUser.DOB = editUser.DOB;
+                dbUser.Address = editUser.Address;
+                
+                if (!string.IsNullOrEmpty(newPassword))
+                {
+                    dbUser.PasswordHash = newPassword;
+                }
+                
+                if (selectedImage != null) dbUser.ProfilePicture = selectedImage;
+
+                await ctx.SaveChangesAsync();
+                UserState.CurrentUser = dbUser;
+                Nav.NavigateTo("/profile");
+            }
+        }
+        catch { error = "Save failed. Try again."; }
+    }
+}

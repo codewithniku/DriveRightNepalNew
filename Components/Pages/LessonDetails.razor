@@ -8,50 +8,55 @@
 @inject NavigationManager Nav
 @inject ConfigService Config
 @inject IJSRuntime JS
+@layout NormalLayout
 
 <head>
     <link href="css/lessondetails.css" rel="stylesheet" />
 </head>
 
-<div class="details-container full-height">
+<div class="main-container">
     @if (lesson == null)
     {
-        <div class="loading">Loading content...</div>
+        <div class="loading-overlay">
+            <div class="spinner"></div>
+            <p>Loading Module Content...</p>
+        </div>
     }
     else
     {
-        @* Header only contains the back button *@
-        <div class="header-minimal">
-            <button class="back-btn" @onclick='() => Nav.NavigateTo("/lessons")'>← Back</button>
+        <div class="header-container">
+            <button class="back-btn" @onclick='() => Nav.NavigateTo("/lessons")'>
+                <img src="images/icons/BackTo.png" alt="Back" />
+            </button>
+            <span class="header-title">@lesson.Title</span>
         </div>
 
         <div class="content-scroll-area">
             @if (!string.IsNullOrEmpty(lesson.PdfUrl))
             {
-                @* Changed from <canvas> to a container <div> for multi-page support *@
                 <div id="pdf-render-container" class="pdf-wrapper">
-                    <div class="text-center p-3">Loading lesson pages...</div>
+                    <div class="text-center p-5 text-muted">Initializing PDF viewer...</div>
                 </div>
             }
             else
             {
-                <div class="html-content p-3">
+                <div class="html-content">
                     @((MarkupString)lesson.Content)
                 </div>
             }
 
-            @* Navigation and completion button at the very bottom of the scroll *@
             <div class="finish-section">
                 @if (isCompleted)
                 {
                     <button class="completed-btn" disabled>
-                        <span class="oi oi-check"></span> Lesson Completed
+                        <img src="images/icons/Safe.png" style="width:20px; margin-right:8px;" />
+                        Module Completed
                     </button>
                 }
                 else
                 {
                     <button class="finish-btn" @onclick="MarkAsDone">
-                        Finish Lesson
+                        Complete Lesson
                     </button>
                 }
             </div>
@@ -64,7 +69,6 @@
     private Lesson? lesson;
     private bool isCompleted = false;
 
-    // HttpClient configured to handle local development SSL certificates
     private HttpClient _http = new HttpClient(new HttpClientHandler
     {
         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
@@ -73,7 +77,6 @@
     protected override async Task OnInitializedAsync()
     {
         using var context = await DbFactory.CreateDbContextAsync();
-        
         lesson = await context.Lessons.FindAsync(LessonId);
 
         if (UserState.CurrentUser != null)
@@ -87,19 +90,14 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // We trigger the PDF render after the component has painted the container div
         if (firstRender && lesson != null && !string.IsNullOrEmpty(lesson.PdfUrl))
         {
             try
             {
-                // 1. Fetch file as bytes via C# to bypass browser security restrictions
-                var fullUrl = $"https://10.0.2.2:7188{lesson.PdfUrl}";
+                // Note: 10.0.2.2 for Emulator, use Config.BaseUrl for dynamic
+                var fullUrl = $"{Config.BaseUrl}{lesson.PdfUrl}";
                 var pdfBytes = await _http.GetByteArrayAsync(fullUrl);
-                
-                // 2. Convert to Base64 to bridge into JavaScript
                 var base64 = Convert.ToBase64String(pdfBytes);
-
-                // 3. Invoke the updated JS function that handles multiple pages
                 await JS.InvokeVoidAsync("renderPdf", base64, "pdf-render-container");
             }
             catch (Exception ex)
@@ -115,21 +113,22 @@
 
         using var context = await DbFactory.CreateDbContextAsync();
 
-        var progress = new UserProgress
+        if (!isCompleted)
         {
-            UserId = UserState.CurrentUser.Id,
-            LessonId = LessonId,
-            IsCompleted = true,
-            CompletedAt = DateTime.UtcNow
-        };
-
-        context.UserProgress.Add(progress);
-        await context.SaveChangesAsync();
+            var progress = new UserProgress
+            {
+                UserId = UserState.CurrentUser.Id,
+                LessonId = LessonId,
+                IsCompleted = true,
+                CompletedAt = DateTime.UtcNow
+            };
+            context.UserProgress.Add(progress);
+            await context.SaveChangesAsync();
+        }
 
         isCompleted = true;
         StateHasChanged();
-        
-        await Task.Delay(1000);
+        await Task.Delay(500);
         Nav.NavigateTo("/lessons");
     }
 }

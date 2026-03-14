@@ -1,0 +1,280 @@
+﻿@page "/quiz-engine/{QuizId:int}"
+@using driverightnepal.Core.Models
+@using driverightnepal.Core.Data
+@using Microsoft.EntityFrameworkCore
+@using System.Timers
+@implements IDisposable
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject UserStateService UserState
+@inject NavigationManager Nav
+@layout NormalLayout
+@inject ConfigService Config
+
+<head>
+    <link href="css/quiz.css" rel="stylesheet" />
+    <link href="css/quiz-engine.css" rel="stylesheet" />
+</head>
+
+<div class="main-container">
+    @* HEADER *@
+    <div class="header-container">
+        <button class="back-btn" @onclick="ExitQuiz">
+            <img src="images/icons/BackTo.png" alt="Back" />
+        </button>
+        <span class="header-title">@quizTitle</span>
+        <div class="header-stats">
+            <div class="stat-box">
+                <span class="stat-number">@(questions != null ? $"{currentQuestionIndex + 1}/{questions.Count}" : "-")</span>
+                <span class="stat-label">Question</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-number">@timeLeftStr</span>
+                <span class="stat-label">Time Left</span>
+            </div>
+        </div>
+    </div>
+
+    @if (questions == null)
+    {
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Preparing your test...</p>
+        </div>
+    }
+    else if (isFinished && !isReviewMode)
+    {
+        @* RESULT SCREEN *@
+        <div class="form-container result-screen">
+            <img src="images/icons/Trophy.png" style="width: 80px; margin-bottom: 15px;" />
+            <h2 style="color: #333;">Test Completed!</h2>
+            <div class="final-score">
+                <span class="score-percent">@scorePercentage%</span>
+                <p>Correct Answers: @correctAnswers / @questions.Count</p>
+            </div>
+            <div class="result-actions" style="display:flex; flex-direction:column; gap:10px; width:100%;">
+                <button class="submit-btn" @onclick="() => isReviewMode = true">Review Answers</button>
+                <button class="nav-btn-prev" style="flex:1;" @onclick='() => Nav.NavigateTo("/quiz")'>Back to Menu</button>
+            </div>
+        </div>
+    }
+    else if (isFinished && isReviewMode)
+    {
+        @* REVIEW MODE *@
+        <div class="review-scroll-container">
+            <div class="form-container review-header-card">
+                <h3 style="margin:0; color: #5686E1;">Reviewing Results</h3>
+                <p style="margin:5px 0 0 0; font-size: 14px; color: #666;">Score: @scorePercentage% (@correctAnswers/@questions.Count)</p>
+            </div>
+
+            @foreach (var (q, index) in questions.Select((value, i) => (value, i)))
+            {
+                <div class="form-container" style="margin-top: 15px;">
+                    @if (!string.IsNullOrEmpty(q.ImagePath))
+                    {
+                        <div class="question-image-container">
+                            <img src="@GetImageUrl(q.ImagePath)" class="question-image" onerror="this.src='images/icons/no-image.png';" />
+                        </div>
+                    }
+                    <p class="question-text">@(index + 1). @q.Text</p>
+                    <div class="options-container">
+                        @foreach (var opt in new[] { ("A", q.OptionA), ("B", q.OptionB), ("C", q.OptionC), ("D", q.OptionD) })
+                        {
+                            <div class="option-item @GetReviewClass(index, opt.Item1, q.CorrectOption)">
+                                <span class="option-label">@opt.Item1</span> @opt.Item2
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            <div style="padding: 20px;">
+                <button class="submit-btn" style="width:100%" @onclick='() => Nav.NavigateTo("/quiz")'>Exit Review</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        @* QUIZ ENGINE *@
+        <div class="form-container">
+            <div class="progress-bar-container">
+                <div class="progress-fill" style="width: @(GetProgress())%"></div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(questions[currentQuestionIndex].ImagePath))
+            {
+                <div class="question-image-container">
+                    <img src="@GetImageUrl(questions[currentQuestionIndex].ImagePath)"
+                         class="question-image"
+                         onerror="this.src='images/icons/no-image.png';" />
+                </div>
+            }
+
+            <div class="question-header">
+                <p class="question-text">@questions[currentQuestionIndex].Text</p>
+            </div>
+
+            <div class="options-container">
+                @foreach (var opt in new[] { "A", "B", "C", "D" })
+                {
+                    var optionText = opt == "A" ? questions[currentQuestionIndex].OptionA :
+                                     opt == "B" ? questions[currentQuestionIndex].OptionB :
+                                     opt == "C" ? questions[currentQuestionIndex].OptionC :
+                                     questions[currentQuestionIndex].OptionD;
+
+                    <div class="option-item @GetClass(opt)" @onclick='() => SelectOption(opt)'>
+                        <span class="option-label">@opt</span>
+                        <span class="option-text">@optionText</span>
+                    </div>
+                }
+            </div>
+
+            <div class="engine-footer">
+                <button class="nav-btn-prev" disabled="@(currentQuestionIndex == 0)" @onclick="Prev">Previous</button>
+                <button class="submit-btn @(HasSelected() ? "" : "btn-disabled")"
+                        disabled="@(!HasSelected())"
+                        @onclick="HandleNextStep">
+                    @(currentQuestionIndex == questions.Count - 1 ? "Finish" : "Next")
+                </button>
+            </div>
+        </div>
+    }
+
+    @* EXIT CONFIRMATION MODAL *@
+    @if (showExitModal)
+    {
+        <div class="modal-overlay">
+            <div class="modal-card">
+                <div class="modal-icon">⚠️</div>
+                <h3>Quit Quiz?</h3>
+                <p>Your current progress will be lost. Are you sure you want to exit the test?</p>
+                <div class="modal-actions">
+                    <button class="modal-btn-cancel" @onclick="() => showExitModal = false">Continue Quiz</button>
+                    <button class="modal-btn-confirm" @onclick="ConfirmExit">Exit Now</button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int QuizId { get; set; }
+    private List<Question>? questions;
+    private string quizTitle = "Loading...";
+    private Dictionary<int, string> userAnswers = new();
+    private int currentQuestionIndex = 0;
+    private Timer? timer;
+    private int totalSeconds;
+    private string timeLeftStr = "00:00";
+    private bool isFinished = false;
+    private bool isReviewMode = false;
+    private bool showExitModal = false;
+    private int scorePercentage = 0;
+    private int correctAnswers = 0;
+
+    private string BaseServerUrl => Config.BaseUrl.EndsWith("/") ? Config.BaseUrl : Config.BaseUrl + "/";
+    protected override async Task OnInitializedAsync()
+    {
+        if (!UserState.IsLoggedIn) { Nav.NavigateTo("/login"); return; }
+        
+        using var ctx = await DbFactory.CreateDbContextAsync();
+        var quiz = await ctx.Quizzes.FindAsync(QuizId);
+        
+        if (quiz != null)
+        {
+            quizTitle = quiz.Title;
+            totalSeconds = quiz.TimeLimitMinutes * 60;
+            questions = await ctx.Questions.Where(q => q.QuizId == QuizId).ToListAsync();
+            if (questions != null && questions.Any()) StartTimer();
+        }
+    }
+
+    private string GetImageUrl(string? path)
+    {
+        // 1. If path is empty, return a blank string immediately to stop the flicker
+        if (string.IsNullOrWhiteSpace(path)) return "";
+
+        // 2. Remove any accidental double slashes or leading slashes
+        var cleanPath = path.Replace("\\", "/").TrimStart('/');
+
+        // 3. Ensure the URL is absolute and uses the correct port 5015
+        return $"http://192.168.10.137:5015/{cleanPath}";
+    }
+
+    private async Task HandleNextStep()
+    {
+        if (questions == null) return;
+        if (currentQuestionIndex == questions.Count - 1)
+        {
+            await FinishQuiz();
+        }
+        else
+        {
+            Next();
+        }
+    }
+
+    private void StartTimer()
+    {
+        timer = new Timer(1000);
+        timer.Elapsed += (s, e) =>
+        {
+            if (totalSeconds > 0)
+            {
+                totalSeconds--;
+                var span = TimeSpan.FromSeconds(totalSeconds);
+                timeLeftStr = span.ToString(@"mm\:ss");
+                InvokeAsync(StateHasChanged);
+            }
+            else { InvokeAsync(FinishQuiz); }
+        };
+        timer.AutoReset = true;
+        timer.Start();
+    }
+
+    private double GetProgress() => questions != null && questions.Count > 0
+        ? ((double)(currentQuestionIndex + 1) / questions.Count) * 100
+        : 0;
+
+    private bool HasSelected() => userAnswers.ContainsKey(currentQuestionIndex);
+    private void SelectOption(string opt) => userAnswers[currentQuestionIndex] = opt;
+    private string GetClass(string opt) => userAnswers.ContainsKey(currentQuestionIndex) && userAnswers[currentQuestionIndex] == opt ? "selected" : "";
+    
+    private void Next() { currentQuestionIndex++; StateHasChanged(); }
+    private void Prev() { currentQuestionIndex--; StateHasChanged(); }
+
+    private string GetReviewClass(int qIndex, string opt, string correctOpt)
+    {
+        var userOpt = userAnswers.ContainsKey(qIndex) ? userAnswers[qIndex] : "";
+        if (opt == correctOpt) return "review-correct";
+        if (userOpt == opt && userOpt != correctOpt) return "review-wrong";
+        return "";
+    }
+
+    private void ExitQuiz() { if (isFinished) Nav.NavigateTo("/quiz"); else showExitModal = true; }
+    private void ConfirmExit() { timer?.Stop(); Nav.NavigateTo("/quiz"); }
+
+    private async Task FinishQuiz()
+    {
+        if (isFinished || questions == null) return;
+        timer?.Stop();
+
+        correctAnswers = questions.Count(q =>
+            userAnswers.TryGetValue(questions.IndexOf(q), out var ans) && ans == q.CorrectOption);
+        
+        scorePercentage = (int)((double)correctAnswers / questions.Count * 100);
+
+        using var ctx = await DbFactory.CreateDbContextAsync();
+        ctx.QuizAttempts.Add(new QuizAttempt
+        {
+            UserId = UserState.CurrentUser.Id,
+            QuizId = QuizId,
+            ScorePercentage = scorePercentage,
+            AttemptDate = DateTime.Now
+        });
+        await ctx.SaveChangesAsync();
+
+        isFinished = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() { timer?.Stop(); timer?.Dispose(); }
+}

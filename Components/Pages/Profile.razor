@@ -1,104 +1,119 @@
 ﻿@page "/profile"
-@inherits MainLayout
+@using driverightnepal.Core.Models
+@using driverightnepal.Core.Data
+@using Microsoft.EntityFrameworkCore
+@inject driverightnepal.Core.Services.UserStateService UserState
+@inject IDbContextFactory<AppDbContext> DbFactory
 @inject NavigationManager Nav
+@using Microsoft.Maui.Storage
 
 <head>
     <link href="css/profile.css" rel="stylesheet" />
 </head>
 
 <div class="main-container">
-
     <div class="header-container">
         <span class="header-title">Your Profile</span>
     </div>
 
-    <div class="profile-card">
-        <div class="profile-card-content">
-            <img src="images/profile.jpg" alt="Profile Picture" class="profile-pic" />
-            <div class="profile-info">
-                <span class="name">Nikesh Simkhada</span>
-                <span class="email">nikesh@example.com</span>
-                <span class="number">9866823031</span>
-            </div>
+    @if (UserState.CurrentUser == null)
+    {
+        <div class="profile-card" style="text-align:center; padding: 40px;">
+            <p>Please log in to view your profile.</p>
+            <button class="save-btn" @onclick='() => Nav.NavigateTo("/login")'>Go to Login</button>
         </div>
-    </div>
-
-    <div class="profile-stats">
-        <div class="stat-box">
-            <span class="stat-label">Lessons Learnt:</span>
-            <span class="stat-label">x</span>
-        </div>
-        <div class="stat-box">
-            <span class="stat-label">Quizzes Passed:</span>
-            <span class="stat-label">x</span>
-        </div>
-        <div class="stat-box">
-            <span class="stat-label">Average:</span>
-            <span class="stat-label">x</span>
-        </div>
-    </div>
-
-    
-
-    <div class="streak-container">
-        <div class="streak-item">
-            <p>🔥 Streak:</p>
-            <span>x</span>
-        </div>
-    </div>
-
-    <div class="profile-actions">
-
-        <!-- SETTINGS SECTION -->
-        <div class="profile-settings">
-            <p class="section-title">Settings</p>
-            <div class="action-item" @onclick="OpenEditProfile">
-                <img src="images/icons/profile/edit.png" alt="Edit" />
-                <span>Edit Profile</span>
-            </div>
-            <div class="action-item" @onclick="OpenChangePassword">
-                <img src="images/icons/profile/password.png" alt="Password" />
-                <span>Change Password</span>
-            </div>
-            <div class="action-item" @onclick="OpenPreferences">
-                <img src="images/icons/profile/settings.png" alt="Settings" />
-                <span>Preferences</span>
+    }
+    else
+    {
+        <div class="profile-card">
+            <div class="profile-card-content">
+                @if (UserState.CurrentUser.ProfilePicture != null)
+                {
+                    <img src="data:image/png;base64,@Convert.ToBase64String(UserState.CurrentUser.ProfilePicture)" class="profile-pic" />
+                }
+                else
+                {
+                    <img src="images/profile.jpg" class="profile-pic" />
+                }
+                <div class="profile-info">
+                    <span class="name">@UserState.CurrentUser.FirstName @UserState.CurrentUser.LastName</span>
+                    <span class="email">@UserState.CurrentUser.Email</span>
+                    <span class="number">@(!string.IsNullOrEmpty(UserState.CurrentUser.PhoneNumber) ? UserState.CurrentUser.PhoneNumber : "No phone added")</span>
+                </div>
             </div>
         </div>
 
-        <!-- SOCIAL SHARING SECTION -->
-        <div class="profile-sharing">
-            <p class="section-title">Share Your Progress</p>
-            <div class="social-icons">
-                <img src="images/icons/profile/fb.png" alt="Facebook" @onclick='() => Share("facebook")' />
-                <img src="images/icons/profile/x.png" alt="Twitter" @onclick='() => Share("twitter")' />
-                <img src="images/icons/profile/whatsapp.png" alt="WhatsApp" @onclick='() => Share("whatsapp")' />
+        <div class="profile-stats">
+            <div class="stat-box">
+                <span class="stat-label">Lessons:</span>
+                <span class="stat-value">@lessonsLearnt</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Passed:</span>
+                <span class="stat-value">@quizzesPassed</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Average:</span>
+                <span class="stat-value">@averageScore%</span>
             </div>
         </div>
-    </div>
 
+        <div class="streak-container">
+            <div class="streak-item">
+                <p>🔥 Learning Streak:</p>
+                <span>@streakDays Days</span>
+            </div>
+        </div>
+
+        <div class="profile-actions">
+            <div class="profile-settings">
+                <p class="section-title">Settings</p>
+                <div class="action-item" @onclick='() => Nav.NavigateTo("/edit-profile")'>
+                    <img src="images/icons/profile/edit.png" />
+                    <span>Edit Profile</span>
+                </div>
+                <div class="action-item" @onclick="HandleLogout">
+                    <img src="images/icons/profile/password.png" />
+                    <span style="color: #dc3545;">Logout Account</span>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
-    void OpenEditProfile()
+    private int lessonsLearnt = 0;
+    private int quizzesPassed = 0;
+    private int averageScore = 0;
+    private int streakDays = 1;
+
+    protected override async Task OnInitializedAsync()
     {
-        // Navigate to Edit Profile page or open modal
-        Nav.NavigateTo("/edit-profile");
+        if (UserState.CurrentUser != null)
+        {
+            using var ctx = await DbFactory.CreateDbContextAsync();
+            var userId = UserState.CurrentUser.Id;
+
+            lessonsLearnt = await ctx.UserProgress.CountAsync(up => up.UserId == userId && up.IsCompleted);
+            
+            var attempts = await ctx.QuizAttempts.Where(qa => qa.UserId == userId).ToListAsync();
+            if (attempts.Any())
+            {
+                quizzesPassed = attempts.Count(a => a.ScorePercentage >= 80);
+                averageScore = (int)attempts.Average(a => a.ScorePercentage);
+            }
+        }
     }
 
-    void OpenChangePassword()
+    private async Task HandleLogout()
     {
-        Nav.NavigateTo("/change-password");
-    }
+        // 1. Clear the persistent ID here where MAUI is available
+        SecureStorage.Default.Remove("logged_in_user_id");
 
-    void OpenPreferences()
-    {
-        Nav.NavigateTo("/preferences");
-    }
+        // 2. Clear the in-memory user
+        UserState.Logout();
 
-    void Share(string platform)
-    {
-        // You can add actual sharing logic here
-        Console.WriteLine($"Sharing to {platform}");
+        // 3. Redirect
+        Nav.NavigateTo("/login", true);
     }
 }

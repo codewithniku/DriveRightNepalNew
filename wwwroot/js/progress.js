@@ -1,32 +1,38 @@
-﻿window.renderQuizChart = (labels, data) => {
-    const ctx = document.getElementById('quizChart');
-    if (!ctx) return;
+﻿window.renderQuizChart = (labels, scores) => {
+    const canvas = document.getElementById('quizChart');
+    if (!canvas) return;
 
-    if (window.quizChartInstance) {
-        window.quizChartInstance.destroy();
+    const ctx = canvas.getContext('2d');
+
+    if (window.myQuizChart) {
+        window.myQuizChart.destroy();
     }
 
-    window.quizChartInstance = new Chart(ctx.getContext('2d'), {
+    window.myQuizChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
             datasets: [{
-                label: 'Quiz Score (%)',
-                data: data,
-                fill: false,
-                borderColor: '#517FA2',
-                backgroundColor: '#517FA2',
-                tension: 0,
-                pointRadius: 5,
-                pointBackgroundColor: '#517FA2',
-                pointBorderColor: '#fff',
+                label: 'Score %',
+                data: scores,
+                borderColor: '#5686E1',
+                backgroundColor: 'rgba(86, 134, 225, 0.1)',
+                tension: 0.3,
+                fill: true
             }]
         },
         options: {
-            responsive: false,           // ✅ turn off responsiveness
-            maintainAspectRatio: false, // still keep aspect ratio control
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, max: 100, ticks: { stepSize: 10 } } }
+            responsive: true,
+            maintainAspectRatio: false, // CRITICAL: This stops the stretching
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
         }
     });
 };

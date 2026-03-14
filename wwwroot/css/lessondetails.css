@@ -1,71 +1,121 @@
-.details-container {
+.main-container {
+    min-height: 100vh;
+    background-color: #F0FDF4; /* Light green background from lessons page */
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    background-color: #ffffff;
-    margin-top: 50px;
 }
 
-.header-minimal {
-    padding: 10px;
-    background: #fff;
-    border-bottom: 1px solid #eee;
+.header-container {
+    background-color: #009132;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0 0 20px 20px;
+    position: relative;
+    padding: 0 20px;
+    flex-shrink: 0;
+}
+
+.header-title {
+    position: absolute;
+    left: 60px; /* Shifted to allow space for back button */
+    right: 20px;
+    font-size: 20px;
+    color: white;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .back-btn {
-    border: none;
+    position: absolute;
+    left: 20px;
     background: none;
-    color: #007bff;
-    font-weight: bold;
-    font-size: 1.1rem;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    z-index: 10;
 }
+
+    .back-btn img {
+        width: 30px;
+        height: 30px;
+    }
 
 .content-scroll-area {
     flex: 1;
     overflow-y: auto;
-    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.html-content {
+    padding: 20px;
+    line-height: 1.6;
+    color: #333;
+    background: white;
+    margin: 15px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
 .pdf-wrapper {
     width: 100%;
-    background: #525659;
+    background: #e8e8e8;
 }
 
     .pdf-wrapper canvas {
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        margin-bottom: 15px;
-        width: 100% !important;
-        height: auto !important;
+        display: block;
+        margin: 10px auto;
+        max-width: 95%;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-radius: 4px;
     }
-
-#the-canvas {
-    display: block;
-    width: 100%; /* Forces canvas to stay within screen width */
-    height: auto;
-}
 
 .finish-section {
     padding: 30px 20px;
-    text-align: center;
-    background: #f8f9fa;
+    margin-top: auto;
 }
 
 .finish-btn {
     width: 100%;
-    padding: 15px;
-    background-color: #28a745;
+    padding: 16px;
+    background-color: #009132; /* Matching the brand green */
     color: white;
     border: none;
-    border-radius: 8px;
-    font-size: 1.2rem;
-    font-weight: bold;
+    border-radius: 15px; /* Matching lesson card radius */
+    font-size: 18px;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0, 145, 50, 0.3);
+    transition: transform 0.2s;
 }
+
+    .finish-btn:active {
+        transform: scale(0.98);
+    }
 
 .completed-btn {
     width: 100%;
-    padding: 15px;
-    background-color: #6c757d;
+    padding: 16px;
+    background-color: #A5D6A7; /* Softer green for completed */
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 15px;
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    color: #009132;
 }

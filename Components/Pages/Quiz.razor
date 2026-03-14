@@ -1,6 +1,11 @@
 ﻿@page "/quiz"
+@using driverightnepal.Core.Models
+@using driverightnepal.Core.Data
+@using Microsoft.EntityFrameworkCore
+@layout MainLayout
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject UserStateService UserState
 @inject NavigationManager Nav
-
 
 <head>
     <link href="css/quiz.css" rel="stylesheet" />
@@ -16,75 +21,115 @@
 
         <div class="header-stats">
             <div class="stat-box">
-                <span class="stat-number">8/20</span>
+                <span class="stat-number">@completedCount/@totalQuizzes</span>
                 <span class="stat-label">Completed</span>
             </div>
             <div class="stat-box">
-                <span class="stat-number">70%</span>
+                <span class="stat-number">@((int)avgScore)%</span>
                 <span class="stat-label">Avg Score</span>
             </div>
             <div class="stat-box">
-                <span class="stat-number">95%</span>
+                <span class="stat-number">@bestScore%</span>
                 <span class="stat-label">Best Score</span>
             </div>
         </div>
     </div>
 
     <div class="quizzes-container">
-        @foreach (var quiz in quizList)
+        @if (quizList == null)
         {
-            <div class="quiz-card">
-                <span class="quiz-title">@quiz.Title</span>
+            <p style="text-align:center; padding: 20px;">Loading Quizzes...</p>
+        }
+        else
+        {
+            @foreach (var quiz in quizList)
+            {
+                <div class="quiz-card">
+                    <span class="quiz-title">@quiz.Title</span>
 
-                <div class="quiz-info">
-                    <div class="quiz-info-item">
-                        <img src="images/icons/Goal.png" alt="Questions" />
-                        <span>@quiz.QuestionsCount questions</span>
+                    <div class="quiz-info">
+                        <div class="quiz-info-item">
+                            <img src="images/icons/Goal.png" alt="Questions" />
+                            <span>@quiz.QuestionsCount questions</span>
+                        </div>
+                        <div class="quiz-info-item">
+                            <img src="images/icons/Clock.png" alt="Time" />
+                            <span>@quiz.TimeMinutes mins</span>
+                        </div>
+                        <div class="quiz-info-item">
+                            <img src="images/icons/Trophy.png" alt="High Score" />
+                            <span>@(quiz.HighScore.HasValue ? $"{quiz.HighScore.Value}%" : "-")</span>
+                        </div>
                     </div>
-                    <div class="quiz-info-item">
-                        <img src="images/icons/Clock.png" alt="Time" />
-                        <span>@quiz.TimeMinutes mins</span>
-                    </div>
-                    <div class="quiz-info-item">
-                        <img src="images/icons/Trophy.png" alt="High Score" />
-                        <span>@(quiz.HighScore.HasValue ? $"{quiz.HighScore.Value}%" : "-")</span>
+
+                    <div class="quiz-divider"></div>
+
+                    <div class="quiz-footer">
+                        <span>@quiz.AttemptedTimes attempts</span>
+                        <button class="quiz-action" @onclick="() => TakeQuiz(quiz.Id)">
+                            @(quiz.AttemptedTimes > 0 ? "Retake Quiz" : "Take Quiz")
+                        </button>
                     </div>
                 </div>
-
-                <div class="quiz-divider"></div>
-
-                <div class="quiz-footer">
-                    <span>@quiz.AttemptedTimes attempts</span>
-                    <button class="quiz-action" @onclick="() => TakeQuiz(quiz)">
-                        @(quiz.AttemptedTimes > 0 ? "Retake Quiz" : "Take Quiz")
-                    </button>
-                </div>
-            </div>
+            }
         }
     </div>
 </div>
 
 @code {
-    void GoBack()
+    private List<QuizDisplayModel> quizList = new();
+    private int completedCount;
+    private int totalQuizzes;
+    private double avgScore;
+    private int bestScore;
+
+    protected override async Task OnInitializedAsync()
     {
-        Nav.NavigateTo("/");
+        if (!UserState.IsLoggedIn) return;
+
+        using var ctx = await DbFactory.CreateDbContextAsync();
+
+        // 1. Fetch all Quizzes and the User's attempts for those quizzes
+        var dbQuizzes = await ctx.Quizzes.ToListAsync();
+        var userAttempts = await ctx.QuizAttempts
+            .Where(a => a.UserId == UserState.CurrentUser.Id)
+            .ToListAsync();
+
+        // 2. Map to UI Model
+        quizList = dbQuizzes.Select(q =>
+        {
+            var attemptsForThisQuiz = userAttempts.Where(a => a.QuizId == q.Id).ToList();
+            return new QuizDisplayModel
+            {
+                Id = q.Id,
+                Title = q.Title,
+                QuestionsCount = q.TotalQuestions,
+                TimeMinutes = q.TimeLimitMinutes,
+                AttemptedTimes = attemptsForThisQuiz.Count,
+                HighScore = attemptsForThisQuiz.Any() ? attemptsForThisQuiz.Max(a => a.ScorePercentage) : null
+            };
+        }).ToList();
+
+        // 3. Calculate Header Stats
+        totalQuizzes = quizList.Count;
+        completedCount = quizList.Count(q => q.AttemptedTimes > 0);
+        if (userAttempts.Any())
+        {
+            avgScore = userAttempts.Average(a => a.ScorePercentage);
+            bestScore = userAttempts.Max(a => a.ScorePercentage);
+        }
     }
 
-    List<Quizz> quizList = new List<Quizz>
-    {
-        new Quizz { Title="Traffic Signs Quiz", QuestionsCount=20, TimeMinutes=15, HighScore=80, AttemptedTimes=1 },
-        new Quizz { Title="Road Rules Quiz", QuestionsCount=15, TimeMinutes=10, HighScore=null, AttemptedTimes=0 },
-        new Quizz { Title="Safety Tips Quiz", QuestionsCount=10, TimeMinutes=5, HighScore=90, AttemptedTimes=0 },
-    };
+    void GoBack() => Nav.NavigateTo("/dashboard");
 
-    void TakeQuiz(Quizz quiz)
+    void TakeQuiz(int quizId)
     {
-        // Navigate to quiz page
-        // Nav.NavigateTo($"/quiz/{quiz.Title}");
+        Nav.NavigateTo($"/quiz-engine/{quizId}");
     }
 
-    public class Quizz
+    public class QuizDisplayModel
     {
+        public int Id { get; set; }
         public string Title { get; set; } = "";
         public int QuestionsCount { get; set; }
         public int TimeMinutes { get; set; }

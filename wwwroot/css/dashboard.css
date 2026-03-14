@@ -14,13 +14,12 @@
 }
 
 /* ================= HEADER ================= */
-
 .header-container {
     background-color: #009132;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     min-height: 200px;
     display: flex;
-    flex-direction: column; /* IMPORTANT FIX */
+    flex-direction: column;
     justify-content: space-between;
 }
 
@@ -32,14 +31,12 @@
     padding: 30px;
 }
 
-/* LEFT SIDE */
 .header-left {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-/* Profile Image */
 .profile-pic {
     width: 45px;
     height: 45px;
@@ -48,7 +45,6 @@
     border: 2px solid white;
 }
 
-/* Text */
 .user-text {
     display: flex;
     flex-direction: column;
@@ -68,9 +64,9 @@
         color: white;
     }
 
-/* Notification */
+/* Notification Button & Badge */
 .header-right {
-    font-size: 20px;
+    position: relative; /* Added for badge positioning */
     cursor: pointer;
     transition: 0.2s ease;
 }
@@ -82,21 +78,36 @@
     .header-right button {
         background: transparent;
         border: none;
-        font-size: 20px;
+        font-size: 24px; /* Slightly larger for visibility */
+        color: white;
     }
 
-/* ===== Progress Inside Header ===== */
+.notif-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #ff4444;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 0.65rem;
+    font-weight: bold;
+    border: 2px solid #009132; /* Match header color */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
 
+/* ===== Progress Inside Header ===== */
 .header-progress {
-    margin-top: 20px;
+    margin: 0 20px 20px 20px;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    border: 2px solid white;
-    padding: 10px;
-    background-color: rgba(128, 128, 128, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(5px);
     color: white;
-    border-radius: 10px;
+    border-radius: 12px;
 }
 
 .progress-text {
@@ -110,7 +121,6 @@
     font-weight: 600;
 }
 
-/* Progress Bar */
 .progress-bar {
     height: 8px;
     background: rgba(255, 255, 255, 0.3);
@@ -120,104 +130,190 @@
 
 .progress-fill {
     height: 100%;
-    background: white;
+    background: #FFFFFF;
     border-radius: 10px;
+    transition: width 0.5s ease-in-out;
 }
 
 /* ================= QUICK ACTIONS ================= */
-
 .section-title {
     margin-top: 25px;
     margin-bottom: 10px;
     font-weight: 600;
-    color: black;
-    padding-left: 20px;
+    color: #1a1a1a;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .quick-actions {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
-    padding: 20px;
-}
-
-.quick-actions img{
-    height: 65px;
-    width: 65px;
+    padding: 0 20px;
 }
 
 .action-card {
     text-decoration: none;
     color: inherit;
     background: white;
-    padding: 20px;
+    padding: 18px;
     border-radius: 14px;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    font-size: 22px;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     transition: 0.2s ease;
 }
 
+    .action-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    }
+
+    .action-card img {
+        height: 50px;
+        width: 50px;
+        margin-bottom: 8px;
+    }
+
     .action-card span {
-        margin-top: 6px;
-        font-size: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
     }
 
     .action-card p {
+        margin: 2px 0 0 0;
         font-size: 10px;
-        opacity: 50%;
-    }
-
-    .action-card:hover {
-        transform: translateY(-3px);
+        color: #888;
     }
 
 /* ================= CONTINUE CARD ================= */
-
 .continue-card {
     background: white;
-    display: flex;
-    flex-direction: column;
     padding: 20px;
     border-radius: 16px;
-    margin-top: 20px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    margin: 20px;
+    margin: 10px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .primary-btn {
+    width: 100%;
     margin-top: 12px;
-    padding: 10px 16px;
+    padding: 14px;
     border: none;
     background-color: #009132;
-    padding: 15px;
     font-size: 15px;
+    font-weight: 600;
     color: white;
     border-radius: 10px;
     cursor: pointer;
 }
 
+/* ================= VIOLATION REPORTS ================= */
+.reports-summary {
+    background: white;
+    border-radius: 16px;
+    margin: 10px 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
 
+.mini-report-card-container {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+    .mini-report-card-container:last-child {
+        border-bottom: none;
+    }
+
+.mini-report-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+}
+
+.report-type {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.report-vehicle {
+    font-size: 0.8rem;
+    color: #007bff;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.report-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+    .status-dot.pending {
+        background: #ffc107;
+    }
+
+    .status-dot.resolved {
+        background: #28a745;
+    }
+
+    .status-dot.rejected {
+        background: #dc3545;
+    }
+
+.status-text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #666;
+    text-transform: capitalize;
+}
+
+.admin-feedback {
+    background: #FFF5F5;
+    border-top: 1px dashed #FEB2B2;
+    color: #C53030;
+    font-size: 0.8rem;
+    padding: 10px 15px;
+    margin-top: -5px;
+}
+
+.view-all-link {
+    background: none;
+    border: none;
+    color: #009132;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+/* ================= LOGOUT ================= */
+.logout-link {
+    align-self: center;
+    margin-bottom: 30px;
+    font-weight: 600;
+    font-size: 14px;
+}
 
 /* ================= RESPONSIVE ================= */
-
 @media (max-width: 600px) {
-
     .header-container {
-        padding: 16px;
-        border-radius: 0px 0px 10px 10px;
+        border-radius: 0px 0px 20px 20px;
     }
 
     .user-text h3 {
         font-size: 18px;
-    }
-
-    .profile-pic {
-        width: 40px;
-        height: 40px;
     }
 }

@@ -1,0 +1,79 @@
+﻿@page "/violation-history"
+@using driverightnepal.Core.Models
+@using driverightnepal.Core.Data
+@using Microsoft.EntityFrameworkCore
+@layout NormalLayout
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject UserStateService UserState
+@inject NavigationManager Nav
+
+<head>
+    <link href="css/notifications.css" rel="stylesheet" />
+    <style>
+        .history-card { cursor: pointer; transition: 0.2s; }
+        .history-card:active { transform: scale(0.98); }
+    </style>
+</head>
+
+<div class="main-container">
+    <div class="header-container">
+        <button class="back-btn" @onclick='() => Nav.NavigateTo("/dashboard")'>
+            <img src="images/icons/BackTo.png" alt="Back" />
+        </button>
+        <span class="header-title">Report History</span>
+    </div>
+
+    <div class="notif-container">
+        @if (allReports == null)
+        {
+            <p class="text-center p-4">Loading your reports...</p>
+        }
+        else if (!allReports.Any())
+        {
+            <div class="empty-state">
+                <img src="images/icons/report.png" style="opacity: 0.3; width: 80px;" />
+                <p>No reports found.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var report in allReports)
+            {
+                <div class="notif-card history-card" @onclick="() => OpenReport(report.Id)">
+                    <div class="notif-left">
+                        <img src='@(report.Status == "Resolved" ? "images/icons/Safe.png" : "images/icons/report.png")' class="notif-icon" />
+                    </div>
+                    <div class="notif-right">
+                        <span class="notif-title">@report.ViolationType</span>
+                        <span class="notif-subtitle">@report.VehicleNumber • @report.SubmittedAt.ToString("MMM dd, yyyy")</span>
+                        
+                        @if (report.Status == "Rejected" && !string.IsNullOrEmpty(report.AdminRemarks))
+                        {
+                            <div class="notif-remarks">
+                                <strong>Reason:</strong> @report.AdminRemarks
+                            </div>
+                        }
+                    </div>
+                    <div class="status-indicator @report.Status.ToLower()"></div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private List<ViolationReport>? allReports;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!UserState.IsLoggedIn) return;
+
+        using var ctx = await DbFactory.CreateDbContextAsync();
+        allReports = await ctx.ViolationReports
+            .Where(v => v.UserId == UserState.CurrentUser.Id)
+            .OrderByDescending(v => v.SubmittedAt)
+            .ToListAsync();
+    }
+
+    void OpenReport(int id) => Nav.NavigateTo($"/report-details/{id}");
+}

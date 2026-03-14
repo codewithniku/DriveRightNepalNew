@@ -1,0 +1,84 @@
+.details-container {
+    padding: 20px;
+}
+
+.evidence-box {
+    position: relative;
+    border-radius: 15px;
+    overflow: hidden;
+    background: black;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.media-player {
+    width: 100%;
+    max-height: 250px;
+    display: block;
+}
+
+.status-overlay {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 5px 15px;
+    border-radius: 20px;
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+    .status-overlay.resolved {
+        background: #28a745;
+    }
+
+    .status-overlay.rejected {
+        background: #dc3545;
+    }
+
+.info-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-top: -20px;
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.vehicle-tag {
+    color: #009132;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.detail-row {
+    margin-bottom: 10px;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.description-box, .remarks-box {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 13px;
+}
+
+.description-box {
+    background: #f8fdfa;
+    border: 1px solid #e0f2e9;
+}
+
+.remarks-box {
+    background: #fff5f5;
+    border: 1px solid #fed7d7;
+    color: #c53030;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+}
