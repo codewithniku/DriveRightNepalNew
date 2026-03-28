@@ -2,6 +2,7 @@
 using driverightnepal.Core.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using driverightnepal.Core.Services;
 using Microsoft.AspNetCore.Components.WebView.Maui;
 
 public static class MauiProgram
@@ -32,7 +33,7 @@ public static class MauiProgram
         // Reverted to 10.0.2.2 for Emulator to hit your PC's Port 5015
         var adminApiUrl = "http://10.0.2.2:5015";
         builder.Services.AddSingleton(new ConfigService { BaseUrl = adminApiUrl });
-
+        builder.Services.AddScoped<MockGeneratorService>();
         // 3. PLATFORM SPECIFIC: Keep these settings as they ensure the WebView works correctly
 #if ANDROID
         Microsoft.Maui.Handlers.WebViewHandler.Mapper.AppendToMapping("BlazorCustomization", (handler, view) =>

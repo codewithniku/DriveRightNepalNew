@@ -190,3 +190,82 @@
     border-radius: 10px;
     cursor: pointer;
 }
+
+/* Container for the locked state message */
+.lock-overlay-msg {
+    animation: fadeIn 0.5s ease-in-out;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 16px;
+    margin-top: 20px;
+    padding: 30px 20px;
+}
+
+/* Grayscale effect for the locked card */
+.locked-card {
+    filter: grayscale(1) opacity(0.6);
+    pointer-events: none; /* Prevents clicking */
+    border: 2px dashed #ccc !important;
+    background: #f9f9f9 !important;
+}
+
+/* The Lock Badge inside the card */
+.lock-badge {
+    background: #444;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: auto;
+    text-transform: uppercase;
+}
+
+/* Checklist Styling */
+.checklist-container {
+    border: 1px solid #eee;
+    width: 100%;
+    max-width: 300px;
+}
+
+    .checklist-container div {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 5px 0;
+        transition: transform 0.2s;
+    }
+
+        .checklist-container div:hover {
+            transform: translateX(5px);
+        }
+
+/* Secondary Button for practice redirection */
+.secondary-btn {
+    background-color: #f0f2f5;
+    color: #1a73e8;
+    border: 2px solid #1a73e8;
+    padding: 12px 30px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: all 0.3s ease;
+}
+
+    .secondary-btn:hover {
+        background-color: #1a73e8;
+        color: white;
+    }
+
+/* Animation for the list */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

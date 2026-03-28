@@ -1,0 +1,273 @@
+﻿@page "/mock-engine"
+@using driverightnepal.Core.Models
+@using driverightnepal.Core.Data
+@using Microsoft.EntityFrameworkCore
+@using System.Timers
+@implements IDisposable
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject driverightnepal.Core.Services.UserStateService UserState
+@inject NavigationManager Nav
+@inject ConfigService Config
+@inject IJSRuntime JS
+@inject driverightnepal.Core.Services.MockGeneratorService MockAI
+@layout NormalLayout
+
+<head>
+    <link href="css/quiz.css" rel="stylesheet" />
+    <link href="css/quiz-engine.css" rel="stylesheet" />
+    <style>
+        .grid-container { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; margin: 15px 0; padding: 10px; background: #fff; border-radius: 12px; }
+        .grid-item { aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: #f0f2f5; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .grid-item.current { border: 2px solid #2196F3; color: #2196F3; }
+        .grid-item.answered { background: #4CAF50; color: white; }
+        .grid-item.marked { background: #FF9800; color: white; }
+        .summary-card { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+    </style>
+</head>
+
+<div class="main-container">
+    <div class="header-container">
+        <button class="back-btn" @onclick="() => showExitModal = true">
+            <img src="images/icons/BackTo.png" alt="Back" />
+        </button>
+        <span class="header-title">Mock Exam</span>
+        <div class="header-stats">
+            <div class="stat-box">
+                <span class="stat-number @(totalSeconds < 300 ? "text-danger" : "")">@timeLeftStr</span>
+                <span class="stat-label">Time Left</span>
+            </div>
+        </div>
+    </div>
+
+    @if (questions == null)
+    {
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>AI is assembling your personalized exam...</p>
+        </div>
+    }
+    else if (isFinished)
+    {
+        <div class="form-container result-screen">
+            <div class="summary-card">
+                <h2 style="color: @(scorePercentage >= 80 ? "#28a745" : "#dc3545")">
+                    @(scorePercentage >= 80 ? "PASSED" : "FAILED")
+                </h2>
+                <div class="score-percent" style="font-size: 48px; font-weight: 800;">@scorePercentage%</div>
+                <p>You got <strong>@correctAnswers</strong> out of @questions.Count correct.</p>
+                <p style="font-size: 0.9rem; color: #666;">The AI has updated your weak points for next time.</p>
+            </div>
+            <button class="submit-btn" @onclick='() => Nav.NavigateTo("/")'>Return to Home</button>
+        </div>
+    }
+    else
+    {
+        <div class="form-container">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="badge bg-primary">Question @(currentQuestionIndex + 1) / @questions.Count</span>
+                <button class="btn btn-sm @(markedQuestions.Contains(currentQuestionIndex) ? "btn-warning" : "btn-outline-warning")" 
+                        @onclick="ToggleMark">
+                    @(markedQuestions.Contains(currentQuestionIndex) ? "★ Marked" : "☆ Mark Review")
+                </button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(questions[currentQuestionIndex].ImagePath))
+            {
+                <div id="mock-pdf-container" class="question-image-container" style="min-height: 200px; background:#eee; border-radius:8px; margin-bottom:15px;"></div>
+            }
+
+            <p class="question-text">@questions[currentQuestionIndex].Text</p>
+
+            <div class="options-container">
+                @foreach (var opt in new[] { "A", "B", "C", "D" })
+                {
+                    <div class="option-item @(userAnswers.GetValueOrDefault(currentQuestionIndex) == opt ? "selected" : "")" 
+                         @onclick='() => SelectOption(opt)'>
+                        <span class="option-label">@opt</span>
+                        <span class="option-text">@GetOptionText(opt)</span>
+                    </div>
+                }
+            </div>
+
+            <div class="grid-container">
+                @for (int i = 0; i < questions.Count; i++)
+                {
+                    int idx = i;
+                    <div class="grid-item @GetGridClass(idx)" @onclick="() => JumpTo(idx)">
+                        @(i + 1)
+                    </div>
+                }
+            </div>
+
+            <div class="engine-footer">
+                <button class="nav-btn-prev" @onclick="Prev" disabled="@(currentQuestionIndex == 0)">Previous</button>
+                @if (currentQuestionIndex == questions.Count - 1)
+                {
+                    <button class="submit-btn" @onclick="() => showFinishModal = true">Submit Exam</button>
+                }
+                else
+                {
+                    <button class="submit-btn" @onclick="Next">Next Question</button>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@if (showExitModal)
+{
+    <div class="modal-overlay">
+        <div class="modal-card">
+            <h3>Quit Mock Exam?</h3>
+            <p>Your progress will be lost. Do you want to exit?</p>
+            <div class="modal-actions">
+                <button class="modal-btn-cancel" @onclick="() => showExitModal = false">Stay</button>
+                <button class="modal-btn-confirm" @onclick='() => Nav.NavigateTo("/")'>Exit Now</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showFinishModal)
+{
+    <div class="modal-overlay">
+        <div class="modal-card">
+            <h3>Submit Exam?</h3>
+            <p>Answered: @userAnswers.Count / @questions?.Count</p>
+            <div class="modal-actions">
+                <button class="modal-btn-cancel" @onclick="() => showFinishModal = false">Review</button>
+                <button class="modal-btn-confirm" @onclick="FinishExam">Finish Now</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Question>? questions;
+    private Dictionary<int, string> userAnswers = new();
+    private HashSet<int> markedQuestions = new();
+    private int currentQuestionIndex = 0;
+    private int lastRenderedIndex = -1;
+    private Timer? timer;
+    private int totalSeconds = 45 * 60;
+    private string timeLeftStr = "45:00";
+    private bool isFinished = false;
+    private bool showExitModal = false;
+    private bool showFinishModal = false;
+    private int scorePercentage = 0;
+    private int correctAnswers = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        int uid = UserState.CurrentUser?.Id ?? 0;
+        questions = await MockAI.GeneratePersonalizedExamAsync(uid);
+        if (questions != null && questions.Any()) StartTimer();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (questions != null && questions.Any() && currentQuestionIndex != lastRenderedIndex)
+        {
+            var q = questions[currentQuestionIndex];
+            if (!string.IsNullOrEmpty(q.ImagePath))
+            {
+                lastRenderedIndex = currentQuestionIndex;
+                await RenderPdf(q.ImagePath);
+            }
+            else { lastRenderedIndex = currentQuestionIndex; }
+        }
+    }
+
+    private async Task RenderPdf(string path)
+    {
+        try {
+            await JS.InvokeVoidAsync("eval", "var el = document.getElementById('mock-pdf-container'); if(el) el.innerHTML = '';");
+            var fullUrl = $"{Config.BaseUrl}/{path.TrimStart('/')}";
+            var bytes = await new HttpClient().GetByteArrayAsync(fullUrl);
+            await JS.InvokeVoidAsync("renderPdf", Convert.ToBase64String(bytes), "mock-pdf-container");
+        } catch { }
+    }
+
+    private void SelectOption(string opt) { userAnswers[currentQuestionIndex] = opt; }
+    private void ToggleMark() { if (!markedQuestions.Add(currentQuestionIndex)) markedQuestions.Remove(currentQuestionIndex); }
+    private void JumpTo(int i) { currentQuestionIndex = i; StateHasChanged(); }
+    private void Next() { if (questions != null && currentQuestionIndex < questions.Count - 1) currentQuestionIndex++; StateHasChanged(); }
+    private void Prev() { if (currentQuestionIndex > 0) currentQuestionIndex--; StateHasChanged(); }
+
+    private string GetGridClass(int i)
+    {
+        if (i == currentQuestionIndex) return "current";
+        if (markedQuestions.Contains(i)) return "marked";
+        if (userAnswers.ContainsKey(i)) return "answered";
+        return "";
+    }
+
+    private string GetOptionText(string opt) => opt switch {
+        "A" => questions![currentQuestionIndex].OptionA,
+        "B" => questions![currentQuestionIndex].OptionB,
+        "C" => questions![currentQuestionIndex].OptionC,
+        _ => questions![currentQuestionIndex].OptionD
+    };
+
+    private void StartTimer()
+    {
+        timer = new Timer(1000);
+        timer.Elapsed += (s, e) => {
+            if (totalSeconds > 0) {
+                totalSeconds--;
+                timeLeftStr = TimeSpan.FromSeconds(totalSeconds).ToString(@"mm\:ss");
+                InvokeAsync(StateHasChanged);
+            } else { InvokeAsync(FinishExam); }
+        };
+        timer.Start();
+    }
+
+    private async Task FinishExam()
+    {
+        timer?.Stop();
+        if (questions == null) return;
+        
+        int uid = UserState.CurrentUser?.Id ?? 0;
+        correctAnswers = questions.Count(q => userAnswers.GetValueOrDefault(questions.IndexOf(q)) == q.CorrectOption);
+        scorePercentage = (int)((double)correctAnswers / questions.Count * 100);
+
+        using var ctx = await DbFactory.CreateDbContextAsync();
+
+        foreach (var q in questions)
+        {
+            var userAns = userAnswers.GetValueOrDefault(questions.IndexOf(q));
+            var isCorrect = userAns == q.CorrectOption;
+            var mistake = await ctx.UserMistakes.FirstOrDefaultAsync(m => m.UserId == uid && m.QuestionId == q.Id);
+
+            if (!isCorrect && !string.IsNullOrEmpty(userAns))
+            {
+                if (mistake == null)
+                    ctx.UserMistakes.Add(new UserMistake { UserId = uid, QuestionId = q.Id, RepeatCount = 3, LastFailed = DateTime.Now });
+                else
+                {
+                    mistake.RepeatCount += 1;
+                    mistake.LastFailed = DateTime.Now;
+                }
+            }
+            else if (isCorrect && mistake != null)
+            {
+                mistake.RepeatCount = Math.Max(0, mistake.RepeatCount - 1);
+            }
+        }
+
+        ctx.QuizAttempts.Add(new QuizAttempt {
+            UserId = uid,
+            QuizId = 0, 
+            ScorePercentage = scorePercentage,
+            Category = "Mock Exam",
+            AttemptDate = DateTime.Now
+        });
+
+        await ctx.SaveChangesAsync();
+        isFinished = true;
+        showFinishModal = false;
+        StateHasChanged();
+    }
+
+    public void Dispose() => timer?.Dispose();
+}

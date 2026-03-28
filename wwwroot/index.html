@@ -32,36 +32,37 @@
         window.renderPdf = (base64Data, wrapperId) => {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+            const wrapper = document.getElementById(wrapperId);
+            if (!wrapper) return; // Guard clause
+
             var binary_string = window.atob(base64Data);
             var bytes = new Uint8Array(binary_string.length);
             for (var i = 0; i < binary_string.length; i++) { bytes[i] = binary_string.charCodeAt(i); }
 
             var loadingTask = pdfjsLib.getDocument({ data: bytes });
             loadingTask.promise.then(function (pdf) {
-                var wrapper = document.getElementById(wrapperId);
-                wrapper.innerHTML = ''; // Clear "Loading..." text or old canvases
+                wrapper.innerHTML = ''; // This clears the previous question's PDF
 
-                // Loop through every page
                 for (var i = 1; i <= pdf.numPages; i++) {
                     renderPage(pdf, i, wrapper);
                 }
-            });
+            }).catch(err => console.error("PDF.js Error:", err));
 
             function renderPage(pdf, pageNumber, wrapper) {
                 pdf.getPage(pageNumber).then(function (page) {
+                    // Calculate scale based on the container width for responsiveness
                     var viewport = page.getViewport({ scale: 1 });
-                    var scale = wrapper.clientWidth / viewport.width;
+                    var scale = (wrapper.clientWidth > 0 ? wrapper.clientWidth : 300) / viewport.width;
                     var scaledViewport = page.getViewport({ scale: scale });
 
                     var canvas = document.createElement('canvas');
                     canvas.style.display = "block";
-                    canvas.style.marginBottom = "10px"; // Space between pages
+                    canvas.style.margin = "0 auto 10px auto";
                     var context = canvas.getContext('2d');
                     canvas.height = scaledViewport.height;
                     canvas.width = scaledViewport.width;
 
                     wrapper.appendChild(canvas);
-
                     page.render({ canvasContext: context, viewport: scaledViewport });
                 });
             }

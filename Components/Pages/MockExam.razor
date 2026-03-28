@@ -1,5 +1,11 @@
 ﻿@page "/mock-exam"
+@using driverightnepal.Core.Models
+@using driverightnepal.Core.Data
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AppDbContext> DbFactory
 @inject NavigationManager Nav
+@inject driverightnepal.Core.Services.UserStateService UserState
+@layout NormalLayout
 
 <head>
     <link href="css/mockexam.css" rel="stylesheet" />
@@ -7,138 +13,126 @@
 
 <div class="main-container">
     <div class="header-container">
-        <button class="back-btn" @onclick="GoBack">
+        <button class="back-btn" @onclick='() => Nav.NavigateTo("/")'>
             <img src="images/icons/BackTo.png" alt="Back" />
         </button>
-
         <span class="header-title">Mock Exam</span>
     </div>
 
     <div class="mock-containers">
-        <div class="mock-card">
+        <div class="mock-card @(IsMockExamUnlocked ? "" : "locked-card")">
             <div class="mock-top">
                 <img src="images/icons/Quiz.png" alt="Icon" class="mock-icon" />
                 <span class="mock-title">Full License Exam</span>
+                @if (!IsMockExamUnlocked)
+                {
+                    <span class="lock-badge">🔒 Locked</span>
+                }
             </div>
 
             <div class="mock-stats">
                 <div class="stat-box">
-                    <img src="images/icons/mock-exam/Goal.png" alt="Alternate Text" />
+                    <img src="images/icons/mock-exam/Goal.png" />
                     <span class="stat-label">50 Questions</span>
                 </div>
                 <div class="stat-box">
-                    <img src="images/icons/mock-exam/Clock.png" alt="Alternate Text" />
+                    <img src="images/icons/mock-exam/Clock.png" />
                     <span class="stat-label">45 Mins</span>
                 </div>
                 <div class="stat-box">
-                    <img src="images/icons/mock-exam/Checkmark.png" alt="Alternate Text" />
+                    <img src="images/icons/mock-exam/Checkmark.png" />
                     <span class="stat-label">80% Pass Mark </span>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="mock-detail-container">
-        <div class="mock-detail-card">
-            <span class="mock-detail-title">Exam Structure</span>
-
-            <div class="mock-detail-item">
-                <img src="images/icons/mock-exam/check.png" alt="Check" class="mock-bullet" />
-                <div class="mock-detail-text">
-                    <span class="item-title">Traffic Signs</span>
-                    <span class="item-subtext">10 questions</span>
+    @if (IsMockExamUnlocked)
+    {
+        <div class="mock-detail-container">
+            <div class="mock-detail-card">
+                <span class="mock-detail-title">Exam Structure</span>
+                <div class="mock-detail-item">
+                    <img src="images/icons/mock-exam/check.png" class="mock-bullet" />
+                    <div class="mock-detail-text">
+                        <span class="item-title">AI Performance Personalization</span>
+                        <span class="item-subtext">The AI has analyzed your practice tests and will focus on your weak points.</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="mock-detail-item">
-                <img src="images/icons/mock-exam/check.png" alt="Check" class="mock-bullet" />
-                <div class="mock-detail-text">
-                    <span class="item-title">Road Safety Rules</span>
-                    <span class="item-subtext">15 questions</span>
-                </div>
-            </div>
-
-            <div class="mock-detail-item">
-                <img src="images/icons/mock-exam/check.png" alt="Check" class="mock-bullet" />
-                <div class="mock-detail-text">
-                    <span class="item-title">Speed Limits</span>
-                    <span class="item-subtext">10 questions</span>
-                </div>
-            </div>
-
-            <div class="mock-detail-item">
-                <img src="images/icons/mock-exam/check.png" alt="Check" class="mock-bullet" />
-                <div class="mock-detail-text">
-                    <span class="item-title">Emergency and First Aid</span>
-                    <span class="item-subtext">5 questions</span>
-                </div>
-            </div>
-
+            <button class="primary-btn" @onclick="Start" disabled="@isPreparing">
+                @if (isPreparing)
+                {
+                    <span>Analyzing Performance...</span>
+                }
+                else
+                {
+                    <span>Start Personalized Mock Exam</span>
+                }
+            </button>
         </div>
-
-        <div class="mock-detail-card">
-            <span class="mock-detail-title">Important Instructions:</span>
-
-            <div class="mock-detail-item">
-                <img src="images/icons/mock-exam/1.png" alt="Check" class="mock-bullet" />
-                <div class="mock-detail-text">
-                    <span class="item-title">
-                        This is a full-length mock exam
-                        simulating the actual license test.
-                    </span>
-                </div>
+    }
+    else
+    {
+        <div class="lock-overlay-msg" style="text-align: center; padding: 20px;">
+            <h3 style="color: #e74c3c; font-weight: bold;">Practice Required</h3>
+            <p>Complete at least one test in each category to unlock the AI Mock Exam.</p>
+            
+            <div class="checklist-container" style="display: inline-block; text-align: left; margin: 15px 0; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                @foreach (var cat in requiredCategories)
+                {
+                    <div style="margin: 8px 0; font-size: 1.1rem; color: @(completedCategories.Contains(cat) ? "#28a745" : "#555")">
+                        @(completedCategories.Contains(cat) ? "✅" : "⭕") @cat
+                    </div>
+                }
             </div>
-
-            <div class="mock-detail-item">
-                <img src="images/icons/mock-exam/2.png" alt="Check" class="mock-bullet" />
-                <div class="mock-detail-text">
-                    <span class="item-title">
-                        You must complete all 50 questions
-                        within 45 minutes.
-                    </span>
-                </div>
-            </div>
-
-            <div class="mock-detail-item">
-                <img src="images/icons/mock-exam/3.png" alt="Check" class="mock-bullet" />
-                <div class="mock-detail-text">
-                    <span class="item-title">
-                        You can mark questions for review and
-                        return to them later.
-                    </span>
-                </div>
-            </div>
-
-            <div class="mock-detail-item">
-                <img src="images/icons/mock-exam/4.png" alt="Check" class="mock-bullet" />
-                <div class="mock-detail-text">
-                    <span class="item-title">
-                        You need at least 80% (40/50) to pass
-                        this exam.
-                    </span>
-                </div>
-            </div>
-
-            <div class="mock-detail-item">
-                <img src="images/icons/mock-exam/5.png" alt="Check" class="mock-bullet" />
-                <div class="mock-detail-text">
-                    <span class="item-title">
-                        Exam will auto-submit when time runs
-                        out.
-                    </span>
-                </div>
-            </div>
-
+            <br />
+            <button class="secondary-btn" @onclick='() => Nav.NavigateTo("/quiz")'>Go to Practice</button>
         </div>
-        <button class="primary-btn">Start Mock Exam</button>
-    </div>
-
-    
+    }
 </div>
 
 @code {
-    void GoBack()
+    private bool isPreparing = false;
+    private bool IsMockExamUnlocked = false;
+    private List<string> completedCategories = new();
+    private readonly string[] requiredCategories = { "Traffic Signs", "Road Safety", "Speed Limits", "Emergency" };
+
+    protected override async Task OnInitializedAsync()
     {
-        Nav.NavigateTo("/");
+        await LoadUserProgress();
+    }
+
+    private async Task LoadUserProgress()
+    {
+        try
+        {
+            using var ctx = await DbFactory.CreateDbContextAsync();
+            int uid = UserState.CurrentUser?.Id ?? 0;
+
+            if (uid > 0)
+            {
+                completedCategories = await ctx.QuizAttempts
+                    .Where(a => a.UserId == uid)
+                    .Select(a => a.Category)
+                    .Distinct()
+                    .ToListAsync();
+
+                IsMockExamUnlocked = requiredCategories.All(r => completedCategories.Contains(r));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading progress: {ex.Message}");
+        }
+    }
+
+    private async Task Start()
+    {
+        isPreparing = true;
+        StateHasChanged();
+        await Task.Delay(2000); // UI Simulation of "AI Thinking"
+        Nav.NavigateTo("/mock-engine");
     }
 }

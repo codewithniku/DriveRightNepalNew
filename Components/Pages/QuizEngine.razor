@@ -5,18 +5,48 @@
 @using System.Timers
 @implements IDisposable
 @inject IDbContextFactory<AppDbContext> DbFactory
-@inject UserStateService UserState
+@inject driverightnepal.Core.Services.UserStateService UserState
 @inject NavigationManager Nav
-@layout NormalLayout
 @inject ConfigService Config
+@inject IJSRuntime JS
+@layout NormalLayout
 
 <head>
     <link href="css/quiz.css" rel="stylesheet" />
     <link href="css/quiz-engine.css" rel="stylesheet" />
+    <style>
+            #quiz-pdf-container {
+                width: 100%;
+                background: #f8f9fa;
+                border-radius: 12px;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+                #quiz-pdf-container canvas {
+                    max-width: 100% !important;
+                    height: auto !important;
+                    margin-bottom: 8px;
+                    border-bottom: 1px solid #eee;
+                }
+
+            .pdf-placeholder {
+                min-height: 200px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #888;
+                font-size: 0.9rem;
+                text-align: center;
+                padding: 20px;
+            }
+    </style>
 </head>
 
 <div class="main-container">
-    @* HEADER *@
+    @* HEADER SECTION *@
     <div class="header-container">
         <button class="back-btn" @onclick="ExitQuiz">
             <img src="images/icons/BackTo.png" alt="Back" />
@@ -43,7 +73,7 @@
     }
     else if (isFinished && !isReviewMode)
     {
-        @* RESULT SCREEN *@
+        @* RESULTS SCREEN *@
         <div class="form-container result-screen">
             <img src="images/icons/Trophy.png" style="width: 80px; margin-bottom: 15px;" />
             <h2 style="color: #333;">Test Completed!</h2>
@@ -52,75 +82,44 @@
                 <p>Correct Answers: @correctAnswers / @questions.Count</p>
             </div>
             <div class="result-actions" style="display:flex; flex-direction:column; gap:10px; width:100%;">
-                <button class="submit-btn" @onclick="() => isReviewMode = true">Review Answers</button>
+                <button class="submit-btn" @onclick="GoToReview">Review Answers</button>
                 <button class="nav-btn-prev" style="flex:1;" @onclick='() => Nav.NavigateTo("/quiz")'>Back to Menu</button>
-            </div>
-        </div>
-    }
-    else if (isFinished && isReviewMode)
-    {
-        @* REVIEW MODE *@
-        <div class="review-scroll-container">
-            <div class="form-container review-header-card">
-                <h3 style="margin:0; color: #5686E1;">Reviewing Results</h3>
-                <p style="margin:5px 0 0 0; font-size: 14px; color: #666;">Score: @scorePercentage% (@correctAnswers/@questions.Count)</p>
-            </div>
-
-            @foreach (var (q, index) in questions.Select((value, i) => (value, i)))
-            {
-                <div class="form-container" style="margin-top: 15px;">
-                    @if (!string.IsNullOrEmpty(q.ImagePath))
-                    {
-                        <div class="question-image-container">
-                            <img src="@GetImageUrl(q.ImagePath)" class="question-image" onerror="this.src='images/icons/no-image.png';" />
-                        </div>
-                    }
-                    <p class="question-text">@(index + 1). @q.Text</p>
-                    <div class="options-container">
-                        @foreach (var opt in new[] { ("A", q.OptionA), ("B", q.OptionB), ("C", q.OptionC), ("D", q.OptionD) })
-                        {
-                            <div class="option-item @GetReviewClass(index, opt.Item1, q.CorrectOption)">
-                                <span class="option-label">@opt.Item1</span> @opt.Item2
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-            <div style="padding: 20px;">
-                <button class="submit-btn" style="width:100%" @onclick='() => Nav.NavigateTo("/quiz")'>Exit Review</button>
             </div>
         </div>
     }
     else
     {
-        @* QUIZ ENGINE *@
+        @* QUIZ & REVIEW CONTENT *@
         <div class="form-container">
-            <div class="progress-bar-container">
-                <div class="progress-fill" style="width: @(GetProgress())%"></div>
-            </div>
+            @if (!isReviewMode)
+            {
+                <div class="progress-bar-container">
+                    <div class="progress-fill" style="width: @(GetProgress())%"></div>
+                </div>
+            }
 
+            @* PDF ATTACHMENT AREA *@
             @if (!string.IsNullOrEmpty(questions[currentQuestionIndex].ImagePath))
             {
-                <div class="question-image-container">
-                    <img src="@GetImageUrl(questions[currentQuestionIndex].ImagePath)"
-                         class="question-image"
-                         onerror="this.src='images/icons/no-image.png';" />
+                <div id="quiz-pdf-container" class="pdf-placeholder" style="margin-bottom: 15px;">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    <span class="ms-2">Loading attachment...</span>
                 </div>
             }
 
             <div class="question-header">
-                <p class="question-text">@questions[currentQuestionIndex].Text</p>
+                <p class="question-text">@(currentQuestionIndex + 1). @questions[currentQuestionIndex].Text</p>
             </div>
 
             <div class="options-container">
                 @foreach (var opt in new[] { "A", "B", "C", "D" })
                 {
-                    var optionText = opt == "A" ? questions[currentQuestionIndex].OptionA :
-                                     opt == "B" ? questions[currentQuestionIndex].OptionB :
-                                     opt == "C" ? questions[currentQuestionIndex].OptionC :
-                                     questions[currentQuestionIndex].OptionD;
+                    var optionText = GetOptionText(opt);
+                    var cssClass = isReviewMode
+                        ? GetReviewClass(currentQuestionIndex, opt, questions[currentQuestionIndex].CorrectOption)
+                        : GetClass(opt);
 
-                    <div class="option-item @GetClass(opt)" @onclick='() => SelectOption(opt)'>
+                    <div class="option-item @cssClass" @onclick='() => { if (!isReviewMode) SelectOption(opt); }'>
                         <span class="option-label">@opt</span>
                         <span class="option-text">@optionText</span>
                     </div>
@@ -129,25 +128,33 @@
 
             <div class="engine-footer">
                 <button class="nav-btn-prev" disabled="@(currentQuestionIndex == 0)" @onclick="Prev">Previous</button>
-                <button class="submit-btn @(HasSelected() ? "" : "btn-disabled")"
-                        disabled="@(!HasSelected())"
-                        @onclick="HandleNextStep">
-                    @(currentQuestionIndex == questions.Count - 1 ? "Finish" : "Next")
-                </button>
+
+                @if (isReviewMode && currentQuestionIndex == questions.Count - 1)
+                {
+                    <button class="submit-btn" @onclick='() => Nav.NavigateTo("/quiz")'>Exit Review</button>
+                }
+                else
+                {
+                    <button class="submit-btn @(HasSelected() || isReviewMode ? "" : "btn-disabled")"
+                            disabled="@(!HasSelected() && !isReviewMode)"
+                            @onclick="HandleNextStep">
+                        @(currentQuestionIndex == questions.Count - 1 && !isReviewMode ? "Finish" : "Next")
+                    </button>
+                }
             </div>
         </div>
     }
 
-    @* EXIT CONFIRMATION MODAL *@
+    @* EXIT DIALOGUE *@
     @if (showExitModal)
     {
         <div class="modal-overlay">
             <div class="modal-card">
                 <div class="modal-icon">⚠️</div>
                 <h3>Quit Quiz?</h3>
-                <p>Your current progress will be lost. Are you sure you want to exit the test?</p>
+                <p>Your progress will be lost. Exit now?</p>
                 <div class="modal-actions">
-                    <button class="modal-btn-cancel" @onclick="() => showExitModal = false">Continue Quiz</button>
+                    <button class="modal-btn-cancel" @onclick="() => showExitModal = false">Continue</button>
                     <button class="modal-btn-confirm" @onclick="ConfirmExit">Exit Now</button>
                 </div>
             </div>
@@ -161,6 +168,7 @@
     private string quizTitle = "Loading...";
     private Dictionary<int, string> userAnswers = new();
     private int currentQuestionIndex = 0;
+    private int lastRenderedIndex = -1;
     private Timer? timer;
     private int totalSeconds;
     private string timeLeftStr = "00:00";
@@ -170,14 +178,16 @@
     private int scorePercentage = 0;
     private int correctAnswers = 0;
 
-    private string BaseServerUrl => Config.BaseUrl.EndsWith("/") ? Config.BaseUrl : Config.BaseUrl + "/";
+    private HttpClient _http = new HttpClient(new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+    });
+
     protected override async Task OnInitializedAsync()
     {
         if (!UserState.IsLoggedIn) { Nav.NavigateTo("/login"); return; }
-        
         using var ctx = await DbFactory.CreateDbContextAsync();
         var quiz = await ctx.Quizzes.FindAsync(QuizId);
-        
         if (quiz != null)
         {
             quizTitle = quiz.Title;
@@ -187,30 +197,59 @@
         }
     }
 
-    private string GetImageUrl(string? path)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // 1. If path is empty, return a blank string immediately to stop the flicker
-        if (string.IsNullOrWhiteSpace(path)) return "";
+        if (questions != null && currentQuestionIndex < questions.Count && currentQuestionIndex != lastRenderedIndex)
+        {
+            var currentQ = questions[currentQuestionIndex];
+            if (!string.IsNullOrEmpty(currentQ.ImagePath))
+            {
+                lastRenderedIndex = currentQuestionIndex;
+                await RenderQuestionPdf(currentQ.ImagePath);
+            }
+            else { lastRenderedIndex = currentQuestionIndex; }
+        }
+    }
 
-        // 2. Remove any accidental double slashes or leading slashes
-        var cleanPath = path.Replace("\\", "/").TrimStart('/');
+    private async Task RenderQuestionPdf(string path)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("eval", "var el = document.getElementById('quiz-pdf-container'); if(el) el.innerHTML = '';");
+            var cleanPath = path.StartsWith("/") ? path : "/" + path;
+            var fullUrl = $"{Config.BaseUrl}{cleanPath}";
+            var pdfBytes = await _http.GetByteArrayAsync(fullUrl);
+            var base64 = Convert.ToBase64String(pdfBytes);
+            await Task.Delay(50);
+            await JS.InvokeVoidAsync("renderPdf", base64, "quiz-pdf-container");
+        }
+        catch (Exception ex) { Console.WriteLine($"PDF Error: {ex.Message}"); }
+    }
 
-        // 3. Ensure the URL is absolute and uses the correct port 5015
-        return $"http://192.168.10.137:5015/{cleanPath}";
+    private void GoToReview()
+    {
+        isReviewMode = true;
+        currentQuestionIndex = 0;
+        lastRenderedIndex = -1;
+        StateHasChanged();
     }
 
     private async Task HandleNextStep()
     {
-        if (questions == null) return;
-        if (currentQuestionIndex == questions.Count - 1)
-        {
-            await FinishQuiz();
-        }
-        else
-        {
-            Next();
-        }
+        if (currentQuestionIndex == questions.Count - 1 && !isReviewMode) await FinishQuiz();
+        else Next();
     }
+
+    private void Next() { if (currentQuestionIndex < questions.Count - 1) currentQuestionIndex++; StateHasChanged(); }
+    private void Prev() { if (currentQuestionIndex > 0) currentQuestionIndex--; StateHasChanged(); }
+
+    private string GetOptionText(string opt) => opt switch
+    {
+        "A" => questions![currentQuestionIndex].OptionA,
+        "B" => questions![currentQuestionIndex].OptionB,
+        "C" => questions![currentQuestionIndex].OptionC,
+        _ => questions![currentQuestionIndex].OptionD
+    };
 
     private void StartTimer()
     {
@@ -220,8 +259,7 @@
             if (totalSeconds > 0)
             {
                 totalSeconds--;
-                var span = TimeSpan.FromSeconds(totalSeconds);
-                timeLeftStr = span.ToString(@"mm\:ss");
+                timeLeftStr = TimeSpan.FromSeconds(totalSeconds).ToString(@"mm\:ss");
                 InvokeAsync(StateHasChanged);
             }
             else { InvokeAsync(FinishQuiz); }
@@ -230,51 +268,72 @@
         timer.Start();
     }
 
-    private double GetProgress() => questions != null && questions.Count > 0
-        ? ((double)(currentQuestionIndex + 1) / questions.Count) * 100
-        : 0;
-
+    private double GetProgress() => (double)(currentQuestionIndex + 1) / questions!.Count * 100;
     private bool HasSelected() => userAnswers.ContainsKey(currentQuestionIndex);
     private void SelectOption(string opt) => userAnswers[currentQuestionIndex] = opt;
-    private string GetClass(string opt) => userAnswers.ContainsKey(currentQuestionIndex) && userAnswers[currentQuestionIndex] == opt ? "selected" : "";
-    
-    private void Next() { currentQuestionIndex++; StateHasChanged(); }
-    private void Prev() { currentQuestionIndex--; StateHasChanged(); }
+    private string GetClass(string opt) => userAnswers.GetValueOrDefault(currentQuestionIndex) == opt ? "selected" : "";
 
     private string GetReviewClass(int qIndex, string opt, string correctOpt)
     {
-        var userOpt = userAnswers.ContainsKey(qIndex) ? userAnswers[qIndex] : "";
+        var userOpt = userAnswers.GetValueOrDefault(qIndex);
         if (opt == correctOpt) return "review-correct";
         if (userOpt == opt && userOpt != correctOpt) return "review-wrong";
         return "";
     }
-
-    private void ExitQuiz() { if (isFinished) Nav.NavigateTo("/quiz"); else showExitModal = true; }
-    private void ConfirmExit() { timer?.Stop(); Nav.NavigateTo("/quiz"); }
 
     private async Task FinishQuiz()
     {
         if (isFinished || questions == null) return;
         timer?.Stop();
 
-        correctAnswers = questions.Count(q =>
-            userAnswers.TryGetValue(questions.IndexOf(q), out var ans) && ans == q.CorrectOption);
-        
+        var uid = UserState.CurrentUser?.Id ?? 0;
+        correctAnswers = questions.Count(q => userAnswers.GetValueOrDefault(questions.IndexOf(q)) == q.CorrectOption);
         scorePercentage = (int)((double)correctAnswers / questions.Count * 100);
 
         using var ctx = await DbFactory.CreateDbContextAsync();
+
+        // AI Logic: Update Mistakes and Mastery (Spaced Repetition)
+        foreach (var q in questions)
+        {
+            var userAns = userAnswers.GetValueOrDefault(questions.IndexOf(q));
+            var isCorrect = userAns == q.CorrectOption;
+            
+            var mistake = await ctx.UserMistakes
+                .FirstOrDefaultAsync(m => m.UserId == uid && m.QuestionId == q.Id);
+
+            if (!isCorrect && !string.IsNullOrEmpty(userAns))
+            {
+                // If wrong, add/update mistake to show it again soon
+                if (mistake == null)
+                    ctx.UserMistakes.Add(new UserMistake { UserId = uid, QuestionId = q.Id, RepeatCount = 2 });
+                else
+                {
+                    mistake.RepeatCount += 1;
+                    mistake.LastFailed = DateTime.Now;
+                }
+            }
+            else if (isCorrect && mistake != null)
+            {
+                // If right, reduce the repeat count (Mastery)
+                mistake.RepeatCount = Math.Max(0, mistake.RepeatCount - 1);
+            }
+        }
+
         ctx.QuizAttempts.Add(new QuizAttempt
         {
-            UserId = UserState.CurrentUser.Id,
+            UserId = uid,
             QuizId = QuizId,
             ScorePercentage = scorePercentage,
-            AttemptDate = DateTime.Now
+            AttemptDate = DateTime.Now,
+            Category = quizTitle // Tracking category for weak-point analysis
         });
-        await ctx.SaveChangesAsync();
 
+        await ctx.SaveChangesAsync();
         isFinished = true;
-        await InvokeAsync(StateHasChanged);
+        StateHasChanged();
     }
 
+    private void ExitQuiz() { if (isFinished) Nav.NavigateTo("/quiz"); else showExitModal = true; }
+    private void ConfirmExit() { timer?.Stop(); Nav.NavigateTo("/quiz"); }
     public void Dispose() { timer?.Stop(); timer?.Dispose(); }
 }
