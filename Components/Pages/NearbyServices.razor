@@ -1,0 +1,140 @@
+﻿@page "/nearby-services"
+@using driverightnepal.Core.Models
+@using driverightnepal.Core.Data
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject NavigationManager Nav
+@layout NormalLayout
+
+<head>
+    <link href="css/nearbyservices.css" rel="stylesheet" />
+</head>
+
+<div class="main-container">
+    @* HEADER *@
+    <div class="header-container">
+        <div class="header-content">
+            <button class="back-btn" @onclick='() => Nav.NavigateTo("/dashboard")'>
+                <img src="images/icons/BackTo.png" alt="Back" />
+            </button>
+            <span class="header-title">Nearby Services</span>
+        </div>
+        
+        @* SEARCH BOX *@
+        <div class="search-section">
+            <div class="search-bar">
+                <span class="search-icon">🔍</span>
+                <input type="text" placeholder="Search area (e.g. Lazimpat, Pokhara)"
+                       @oninput='(e) => { selectedArea = e.Value?.ToString() ?? ""; ApplyFilters(); }' />
+            </div>
+        </div>
+    </div>
+
+    @* CATEGORY CHIPS *@
+    <div class="category-scroll">
+        <div class="chip @(selectedCategory == "" ? "active" : "")" @onclick='() => SetCategory("")'>
+            All
+        </div>
+        <div class="chip @(selectedCategory == "Garage" ? "active" : "")" @onclick='() => SetCategory("Garage")'>
+            🧰 Garages
+        </div>
+        <div class="chip @(selectedCategory == "Petrol Pump" ? "active" : "")" @onclick='() => SetCategory("Petrol Pump")'>
+            ⛽ Petrol
+        </div>
+        <div class="chip @(selectedCategory == "Charging Station" ? "active" : "")" @onclick='() => SetCategory("Charging Station")'>
+            ⚡ EV Charge
+        </div>
+        <div class="chip @(selectedCategory == "Police Station" ? "active" : "")" @onclick='() => SetCategory("Police Station")'>
+            👮 Police
+        </div>
+        <div class="chip @(selectedCategory == "Workshop" ? "active" : "")" @onclick='() => SetCategory("Workshop")'>
+            🔧 Workshop
+        </div>
+    </div>
+
+    @* SERVICES LIST *@
+    <div class="content-body">
+        <div class="section-title">Found in "@(string.IsNullOrEmpty(selectedArea) ? "All Areas" : selectedArea)"</div>
+
+        <div class="services-grid">
+            @if (!filteredServices.Any())
+            {
+                <div class="empty-state">
+                    <p>No services found matching your criteria.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var s in filteredServices)
+                {
+                    <div class="service-card">
+                        <div class="card-left">
+                            <div class="category-icon-bg">
+                                @GetCategoryEmoji(s.Category)
+                            </div>
+                            <div class="service-info">
+                                <h4>@s.Name</h4>
+                                <div class="info-row">
+                                    <span class="area-tag">📍 @s.Area</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-actions">
+                            @if (!string.IsNullOrEmpty(s.PhoneNumber))
+                            {
+                                <a href="tel:@s.PhoneNumber" class="action-btn call-btn">
+                                    <span class="btn-icon">📞</span>
+                                    <span class="btn-text">Call</span>
+                                </a>
+                            }
+
+                            <a href="@s.GoogleMapsUrl" target="_blank" rel="noopener noreferrer" class="action-btn map-btn">
+                                <span class="btn-icon">🚀</span>
+                                <span class="btn-text">Go</span>
+                            </a>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<NearbyService> allServices = new();
+    private List<NearbyService> filteredServices = new();
+    private string selectedCategory = "";
+    private string selectedArea = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var ctx = await DbFactory.CreateDbContextAsync();
+        allServices = await ctx.NearbyServices.ToListAsync();
+        filteredServices = allServices;
+    }
+
+    private void SetCategory(string cat)
+    {
+        selectedCategory = cat;
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        filteredServices = allServices
+            .Where(s => (string.IsNullOrEmpty(selectedCategory) || s.Category == selectedCategory) &&
+                        (string.IsNullOrEmpty(selectedArea) || s.Area.Contains(selectedArea, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+    }
+
+    private string GetCategoryEmoji(string category) => category switch
+    {
+        "Garage" => "🧰",
+        "Petrol Pump" => "⛽",
+        "Charging Station" => "⚡",
+        "Police Station" => "👮",
+        "Workshop" => "🔧",
+        _ => "📍"
+    };
+}
