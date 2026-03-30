@@ -4,7 +4,6 @@
     padding-bottom: 30px;
 }
 
-/* Header matches Dashboard */
 .header-container {
     background-color: #009132;
     padding: 20px 20px 30px 20px;
@@ -61,7 +60,6 @@
             color: rgba(255,255,255,0.7);
         }
 
-/* Category Chips */
 .category-scroll {
     display: flex;
     overflow-x: auto;
@@ -92,7 +90,6 @@
         color: white;
     }
 
-/* Service Cards */
 .content-body {
     padding: 0 20px;
 }

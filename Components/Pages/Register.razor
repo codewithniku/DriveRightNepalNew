@@ -7,13 +7,12 @@
 @inject IDbContextFactory<driverightnepal.Core.Data.AppDbContext> DbFactory
 @inject UserStateService UserState
 @inject NavigationManager Nav
+@inject IEmailService EmailService
 
 <title>Register</title>
-
 <head>
     <link href="css/signup.css" rel="stylesheet" />
 </head>
-
 <div class="login-wrapper">
     <div class="login-container">
         <img src="images/logo.svg" class="login-logo" />
@@ -89,14 +88,12 @@
     {
         message = string.Empty;
 
-        // 1️⃣ Password match validation
         if (registerModel.Password != registerModel.ConfirmPassword)
         {
             message = "Passwords do not match.";
             return;
         }
 
-        // 2️⃣ Check if email already exists in DB
         using var context = DbFactory.CreateDbContext();
         var existingUser = await context.Users.FirstOrDefaultAsync(u => u.Email == registerModel.Email);
 
@@ -106,10 +103,8 @@
             return;
         }
 
-        // 3️⃣ Hash the password
         var passwordHash = HashPassword(registerModel.Password);
 
-        // 4️⃣ Create new User entity
         var user = new driverightnepal.Core.Models.User
         {
             FirstName = registerModel.FirstName,
@@ -119,19 +114,37 @@
             Email = registerModel.Email,
             PasswordHash = passwordHash,
             CreatedAt = DateTime.UtcNow,
+            IsEmailVerified = false,
             ProfilePicture = null
         };
 
-        // 5️⃣ Save to DB
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
-        message = "Registration successful!";
-        // Optional: redirect to login page
+        try
+        {
+            string welcomeSubject = "Welcome to Drive Right Nepal!";
+            string welcomeBody = $@"
+                <div style='font-family: Arial, sans-serif; color: #333;'>
+                    <h2 style='color: #009132;'>Namaste {user.FirstName}!</h2>
+                    <p>Welcome to <b>Drive Right Nepal</b>. We are thrilled to have you join our community dedicated to safe and smart driving.</p>
+                    <p>Your account has been created successfully. For your security, we use Two-Factor Authentication (2FA). Every time you log in, you will receive a secure OTP on this email address.</p>
+                    <hr/>
+                    <p style='font-size: 0.8rem; color: #666;'>This is an automated welcome email. No response is needed.</p>
+                </div>";
+
+            await EmailService.SendEmailAsync(user.Email, welcomeSubject, welcomeBody);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Email failed: {ex.Message}");
+        }
+
+        message = "Registration successful! Redirecting to login...";
+        await Task.Delay(2000);
         Nav.NavigateTo("/login");
     }
 
-    // SHA256 password hashing
     private string HashPassword(string password)
     {
         using var sha256 = System.Security.Cryptography.SHA256.Create();

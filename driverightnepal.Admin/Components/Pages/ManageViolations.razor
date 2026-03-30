@@ -1,0 +1,209 @@
+@page "/manage-violations"
+@using driverightnepal.Core.Models
+@using driverightnepal.Core.Data
+@using Microsoft.JSInterop
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject IJSRuntime JS
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary">Traffic Violation Reports</h2>
+        <div>
+            <span class="badge bg-danger p-2">Urgent: @violations.Count(v => v.IsUrgent && v.Status == "Pending")</span>
+        </div>
+    </div>
+
+    @* Table Section *@
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Urgency</th>
+                        <th>Reporter</th>
+                        <th>Type</th>
+                        <th>Vehicle No.</th>
+                        <th>Evidence</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var v in violations)
+                    {
+                        <tr>
+                            <td>@(v.IsUrgent ? "🚨 Urgent" : "Normal")</td>
+                            <td>
+                                @if (v.User != null)
+                                {
+                                    <div class="d-flex align-items-center">
+                                        <span class="fw-bold">@v.User.FirstName @v.User.LastName</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Guest</span>
+                                }
+                            </td>
+                            <td><strong>@v.ViolationType</strong></td>
+                            <td>@v.VehicleNumber</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(v.MediaPath))
+                                {
+                                    <button class="btn btn-sm btn-info text-white" @onclick="() => OpenModal(v.MediaPath)">View Evidence</button>
+                                }
+                            </td>
+                            <td>
+                                <a href="https://www.google.com/maps/search/?api=1&query=@v.Location" target="_blank">
+                                    <small>@v.Location</small> 📍
+                                </a>
+                            </td>
+                            <td><span class="badge @(GetStatusClass(v.Status))">@v.Status</span></td>
+                            <td class="text-center" style="min-width: 250px;">
+                                @if (v.Status == "Pending")
+                                {
+                                    <div class="input-group input-group-sm mb-2">
+                                        <input type="text" class="form-control" placeholder="Reason for rejection..."
+                                               @bind="v.AdminRemarks" />
+                                    </div>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-success" @onclick='() => UpdateStatus(v, "Resolved")'>Approve</button>
+                                        <button class="btn btn-danger" @onclick='() => UpdateStatus(v, "Rejected")'>Reject</button>
+                                        <button class="btn btn-outline-dark" @onclick="() => DeleteReport(v.Id)">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="text-muted small text-start">
+                                            <strong>Finalized:</strong> @v.Status
+                                            @if (!string.IsNullOrEmpty(v.AdminRemarks))
+                                            {
+                                                <br /><span class="font-italic">"@v.AdminRemarks"</span>
+                                            }
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteReport(v.Id)">Delete</button>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@* --- EVIDENCE MODAL --- *@
+@if (showModal)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.7);" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Evidence View</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body text-center bg-light">
+                    @if (selectedMediaPath.EndsWith(".mp4") || selectedMediaPath.EndsWith(".mov"))
+                    {
+                        <video controls style="max-width: 100%; max-height: 500px;">
+                            <source src="uploads/@selectedMediaPath" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    }
+                    else
+                    {
+                        @* Assuming it's an image *@
+                        <img src="uploads/@selectedMediaPath" style="max-width: 100%; max-height: 500px; object-fit: contain;" />
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ViolationReport> violations = new();
+    private bool showModal = false;
+    private string selectedMediaPath = "";
+
+    protected override async Task OnInitializedAsync() => await LoadViolations();
+
+    private async Task LoadViolations()
+    {
+        using var ctx = await DbFactory.CreateDbContextAsync();
+        violations = await ctx.ViolationReports
+            .Include(v => v.User) // This links the user data
+            .OrderByDescending(v => v.IsUrgent)
+            .ThenByDescending(v => v.SubmittedAt)
+            .ToListAsync();
+    }
+
+    private void OpenModal(string path)
+    {
+        selectedMediaPath = path;
+        showModal = true;
+    }
+
+    private async Task DeleteReport(int reportId)
+    {
+        // 1. Ask for confirmation
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to permanently delete this traffic violation report?");
+
+        if (confirmed)
+        {
+            try
+            {
+                using var ctx = await DbFactory.CreateDbContextAsync();
+                var report = await ctx.ViolationReports.FindAsync(reportId);
+
+                if (report != null)
+                {
+                    ctx.ViolationReports.Remove(report);
+                    await ctx.SaveChangesAsync();
+
+                    // 2. Refresh the local list
+                    await LoadViolations();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting report: {ex.Message}");
+            }
+        }
+    }
+
+    private void CloseModal() => showModal = false;
+
+    private async Task UpdateStatus(ViolationReport v, string newStatus)
+    {
+        using var ctx = await DbFactory.CreateDbContextAsync();
+        var record = await ctx.ViolationReports.FindAsync(v.Id);
+
+        if (record != null)
+        {
+            record.Status = newStatus;
+            // This ensures whatever the admin typed in the input box gets saved
+            record.AdminRemarks = v.AdminRemarks;
+
+            await ctx.SaveChangesAsync();
+            await LoadViolations(); // Refresh list
+        }
+    }
+
+    private string GetStatusClass(string status) => status switch
+    {
+        "Pending" => "bg-warning text-dark",
+        "Resolved" => "bg-success",
+        "Rejected" => "bg-danger",
+        _ => "bg-secondary"
+    };
+}

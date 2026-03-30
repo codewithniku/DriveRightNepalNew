@@ -68,6 +68,7 @@
     [Parameter] public int LessonId { get; set; }
     private Lesson? lesson;
     private bool isCompleted = false;
+    private bool isPdfRendered = false;
 
     private HttpClient _http = new HttpClient(new HttpClientHandler
     {
@@ -90,15 +91,18 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && lesson != null && !string.IsNullOrEmpty(lesson.PdfUrl))
+        if (lesson != null && !string.IsNullOrEmpty(lesson.PdfUrl) && !isPdfRendered)
         {
             try
             {
-                // Note: 10.0.2.2 for Emulator, use Config.BaseUrl for dynamic
+                await Task.Delay(150);
+                
                 var fullUrl = $"{Config.BaseUrl}{lesson.PdfUrl}";
                 var pdfBytes = await _http.GetByteArrayAsync(fullUrl);
                 var base64 = Convert.ToBase64String(pdfBytes);
+                
                 await JS.InvokeVoidAsync("renderPdf", base64, "pdf-render-container");
+                isPdfRendered = true;
             }
             catch (Exception ex)
             {
@@ -110,7 +114,6 @@
     private async Task MarkAsDone()
     {
         if (UserState.CurrentUser == null) return;
-
         using var context = await DbFactory.CreateDbContextAsync();
 
         if (!isCompleted)

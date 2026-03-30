@@ -2,6 +2,7 @@
 @using driverightnepal.Core.Models
 @using driverightnepal.Core.Data
 @using Microsoft.EntityFrameworkCore
+@using System.IO
 @layout NormalLayout
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject NavigationManager Nav
@@ -13,7 +14,7 @@
 
 <div class="main-container">
     <div class="header-container" style='background-color: @(report?.Status == "Rejected" ? "#E32222" : "#009132")'>
-        <button class="back-btn" @onclick='() => Nav.NavigateTo("/notifications")'>
+        <button class="back-btn" @onclick='() => Nav.NavigateTo("/violation-history")'>
             <img src="images/icons/BackTo.png" alt="Back" />
         </button>
         <span class="header-title">Report Review</span>
@@ -25,20 +26,30 @@
         <div class="form-container">
             <div class="form-group">
                 <label>Evidence Submitted</label>
-                @inject ConfigService Config
-
-                <div class="evidence-preview" style="background: #000; border-radius: 12px; overflow: hidden;">
-                    @if (report.MediaPath?.ToLower().EndsWith(".mp4") == true)
+                
+                <div class="evidence-preview" style="background: #000; border-radius: 12px; overflow: hidden; min-height: 200px; display: flex; align-items: center; justify-content: center; position: relative;">
+                    
+                    @if (isDownloading)
                     {
-                        <video controls playsinline preload="metadata" style="width: 100%; max-height: 250px; background: #000;">
-                            @* We add the type attribute and a 'fake' extension as a query param to help the player *@
-                            <source src="@($"{Config.BaseUrl}/uploads/{report.MediaPath}?ext=.mp4")" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
+                        <div style="color: white; text-align: center;">
+                            <div class="spinner-border text-light" role="status"></div>
+                            <p>Loading evidence...</p>
+                        </div>
                     }
-                    else
+                    else if (!string.IsNullOrEmpty(mediaDataUrl))
                     {
-                        <img src="@($"{Config.BaseUrl}/uploads/{report.MediaPath}")" style="width: 100%; max-height: 250px; object-fit: contain;" />
+                        var fileExt = Path.GetExtension(report.MediaPath).ToLower();
+
+                        @if (fileExt == ".mp4" || fileExt == ".mov" || fileExt == ".avi")
+                        {
+                            <video controls playsinline style="width: 100%; max-height: 250px; background: #000;" src="@mediaDataUrl">
+                                Your browser does not support the video tag.
+                            </video>
+                        }
+                        else
+                        {
+                            <img src="@mediaDataUrl" style="width: 100%; max-height: 250px; object-fit: contain;" />
+                        }
                     }
                 </div>
             </div>
@@ -106,16 +117,78 @@
 @code {
     [Parameter] public int ReportId { get; set; }
     private ViolationReport? report;
+    private string? mediaDataUrl;
+    private bool isDownloading = false;
 
     protected override async Task OnInitializedAsync()
     {
         using var ctx = await DbFactory.CreateDbContextAsync();
         report = await ctx.ViolationReports.FindAsync(ReportId);
 
-        if (report != null && !report.IsRead)
+        if (report != null)
         {
-            report.IsRead = true;
-            await ctx.SaveChangesAsync();
+            if (!report.IsRead)
+            {
+                report.IsRead = true;
+                await ctx.SaveChangesAsync();
+            }
+            await LoadMediaAsync();
         }
+    }
+
+    private async Task LoadMediaAsync()
+    {
+        if (string.IsNullOrEmpty(report?.MediaPath)) return;
+
+        string cacheFileName = report.MediaPath;
+        string targetPath = Path.Combine(FileSystem.CacheDirectory, cacheFileName);
+
+        try
+        {
+            byte[] fileData;
+
+            if (File.Exists(targetPath))
+            {
+                fileData = await File.ReadAllBytesAsync(targetPath);
+            }
+            else
+            {
+                isDownloading = true;
+                StateHasChanged();
+
+                string remoteUrl = $"{Config.BaseUrl.TrimEnd('/')}/uploads/{report.MediaPath}";
+                using var client = new HttpClient();
+                fileData = await client.GetByteArrayAsync(remoteUrl);
+                
+                await File.WriteAllBytesAsync(targetPath, fileData);
+            }
+
+            string contentType = GetContentType(targetPath);
+            string base64 = Convert.ToBase64String(fileData);
+            mediaDataUrl = $"data:{contentType};base64,{base64}";
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading media: {ex.Message}");
+        }
+        finally
+        {
+            isDownloading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetContentType(string path)
+    {
+        var ext = Path.GetExtension(path).ToLower();
+        return ext switch
+        {
+            ".png" => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".gif" => "image/gif",
+            ".mp4" => "video/mp4",
+            ".mov" => "video/quicktime",
+            _ => "application/octet-stream"
+        };
     }
 }

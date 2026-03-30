@@ -46,7 +46,6 @@
 </head>
 
 <div class="main-container">
-    @* HEADER SECTION *@
     <div class="header-container">
         <button class="back-btn" @onclick="ExitQuiz">
             <img src="images/icons/BackTo.png" alt="Back" />
@@ -73,7 +72,6 @@
     }
     else if (isFinished && !isReviewMode)
     {
-        @* RESULTS SCREEN *@
         <div class="form-container result-screen">
             <img src="images/icons/Trophy.png" style="width: 80px; margin-bottom: 15px;" />
             <h2 style="color: #333;">Test Completed!</h2>
@@ -89,7 +87,6 @@
     }
     else
     {
-        @* QUIZ & REVIEW CONTENT *@
         <div class="form-container">
             @if (!isReviewMode)
             {
@@ -98,7 +95,6 @@
                 </div>
             }
 
-            @* PDF ATTACHMENT AREA *@
             @if (!string.IsNullOrEmpty(questions[currentQuestionIndex].ImagePath))
             {
                 <div id="quiz-pdf-container" class="pdf-placeholder" style="margin-bottom: 15px;">
@@ -145,7 +141,6 @@
         </div>
     }
 
-    @* EXIT DIALOGUE *@
     @if (showExitModal)
     {
         <div class="modal-overlay">
@@ -292,7 +287,6 @@
 
         using var ctx = await DbFactory.CreateDbContextAsync();
 
-        // AI Logic: Update Mistakes and Mastery (Spaced Repetition)
         foreach (var q in questions)
         {
             var userAns = userAnswers.GetValueOrDefault(questions.IndexOf(q));
@@ -303,7 +297,6 @@
 
             if (!isCorrect && !string.IsNullOrEmpty(userAns))
             {
-                // If wrong, add/update mistake to show it again soon
                 if (mistake == null)
                     ctx.UserMistakes.Add(new UserMistake { UserId = uid, QuestionId = q.Id, RepeatCount = 2 });
                 else
@@ -314,7 +307,6 @@
             }
             else if (isCorrect && mistake != null)
             {
-                // If right, reduce the repeat count (Mastery)
                 mistake.RepeatCount = Math.Max(0, mistake.RepeatCount - 1);
             }
         }
@@ -325,7 +317,7 @@
             QuizId = QuizId,
             ScorePercentage = scorePercentage,
             AttemptDate = DateTime.Now,
-            Category = quizTitle // Tracking category for weak-point analysis
+            Category = quizTitle
         });
 
         await ctx.SaveChangesAsync();

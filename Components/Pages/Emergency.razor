@@ -7,7 +7,6 @@
 
 <div class="main-container">
 
-    <!-- HEADER -->
     <div class="header-container">
         <button class="back-btn" @onclick="GoBack">
             <img src="images/icons/BackTo.png" alt="Back" />
@@ -16,10 +15,8 @@
         <span class="header-title">Emergency Services</span>
     </div>
 
-    <!-- EMERGENCY CARDS -->
     <div class="emergency-container">
 
-        <!-- Police -->
         <div class="emergency-card" @onclick="@(() => CallNumber("100"))">
             <div class="card-left">
                 <span class="contact-name">Police</span>
@@ -31,7 +28,6 @@
             </div>
         </div>
 
-        <!-- Fire -->
         <div class="emergency-card" @onclick="@(() => CallNumber("101"))">
             <div class="card-left">
                 <span class="contact-name">Fire Brigade</span>
@@ -43,7 +39,6 @@
             </div>
         </div>
 
-        <!-- Ambulance -->
         <div class="emergency-card" @onclick="@(() => CallNumber("102"))">
             <div class="card-left">
                 <span class="contact-name">Ambulance</span>

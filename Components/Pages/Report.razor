@@ -14,6 +14,13 @@
 </head>
 
 <div class="main-container">
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger" style="margin-bottom: 20px; padding: 12px; background-color: #f8d7da; color: #721c24; border-radius: 4px; border: 1px solid #f5c6cb;">
+            @errorMessage
+        </div>
+    }
+
     <div class="header-container">
         <button class="back-btn" @onclick="GoBack">
             <img src="images/icons/BackTo.png" alt="Back" />
@@ -113,6 +120,7 @@
     private bool IsUrgent;
     private IBrowserFile? selectedFile;
     private bool isSubmitting = false;
+    private string errorMessage = string.Empty;
 
     void GoBack() => Nav.NavigateTo("/dashboard");
 
@@ -138,60 +146,91 @@
 
     private async Task SubmitReport()
     {
-        if (selectedFile == null) return;
+        if (selectedFile == null)
+        {
+            errorMessage = "Please select a photo or video";
+            StateHasChanged();
+            return;
+        }
+
+        if (string.IsNullOrEmpty(ViolationType))
+        {
+            errorMessage = "Please select a violation type";
+            StateHasChanged();
+            return;
+        }
+
+        if (string.IsNullOrEmpty(LocationAddress))
+        {
+            errorMessage = "Please provide a location";
+            StateHasChanged();
+            return;
+        }
+
+        if (string.IsNullOrEmpty(VehicleNumber))
+        {
+            errorMessage = "Please enter vehicle number";
+            StateHasChanged();
+            return;
+        }
 
         isSubmitting = true;
-        StateHasChanged(); // Force the "Uploading..." text to show
+        errorMessage = string.Empty;
+        StateHasChanged();
 
         try
         {
             var content = new MultipartFormDataContent();
-            // Increase buffer for larger videos (100MB)
             var fileStream = selectedFile.OpenReadStream(100 * 1024 * 1024);
             var streamContent = new StreamContent(fileStream);
             content.Add(streamContent, "file", selectedFile.Name);
 
             using var client = new HttpClient(GetInsecureHandler());
-            client.Timeout = TimeSpan.FromMinutes(3); // Give video time to upload
-
-            // 10.0.2.2 is the Magic IP to reach your PC from the Emulator
+            client.Timeout = TimeSpan.FromMinutes(5);
+        
             var response = await client.PostAsync("http://10.0.2.2:5015/api/upload", content);
 
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<UploadResponse>();
-            
-                using var ctx = await DbFactory.CreateDbContextAsync();
-            
-                // Safety check for UserState
-                if (UserState.CurrentUser == null) throw new Exception("User session expired.");
-
-                var report = new ViolationReport
-                {
-                    UserId = UserState.CurrentUser.Id,
-                    ViolationType = ViolationType ?? "Other",
-                    Location = LocationAddress ?? "Unknown",
-                    IncidentDateTime = IncidentDateTime,
-                    VehicleNumber = VehicleNumber ?? "Unknown",
-                    VehicleColor = VehicleColor,
-                    VehicleType = VehicleType,
-                    Description = Description,
-                    IsUrgent = IsUrgent,
-                    MediaPath = result?.fileName,
-                    Status = "Pending",
-                    SubmittedAt = DateTime.Now
-                };
-
-                ctx.ViolationReports.Add(report);
-                await ctx.SaveChangesAsync();
-            
-                Nav.NavigateTo("/dashboard");
+                throw new Exception($"Server upload failed: {response.StatusCode}");
             }
+
+            var uploadResult = await response.Content.ReadFromJsonAsync<UploadResponse>();
+            string serverFileName = uploadResult?.fileName ?? "";
+
+            using var ctx = await DbFactory.CreateDbContextAsync();
+        
+            if (UserState.CurrentUser == null)
+            {
+                errorMessage = "User session expired. Please log in again.";
+                return;
+            }
+
+            var report = new ViolationReport
+            {
+                UserId = UserState.CurrentUser.Id,
+                ViolationType = ViolationType ?? "Other",
+                Location = LocationAddress ?? "Unknown",
+                IncidentDateTime = IncidentDateTime,
+                VehicleNumber = VehicleNumber ?? "Unknown",
+                VehicleColor = VehicleColor,
+                VehicleType = VehicleType,
+                Description = Description,
+                IsUrgent = IsUrgent,
+                MediaPath = serverFileName,
+                Status = "Pending",
+                SubmittedAt = DateTime.UtcNow
+            };
+
+            ctx.ViolationReports.Add(report);
+            await ctx.SaveChangesAsync();
+
+            Nav.NavigateTo("/dashboard");
         }
         catch (Exception ex)
         {
-            // This will print to the Visual Studio "Output" window
-            System.Diagnostics.Debug.WriteLine($"UPLOAD ERROR: {ex.Message}");
+            errorMessage = $"Error: {ex.Message}";
+            StateHasChanged();
         }
         finally
         {

@@ -32,7 +32,6 @@
         {
             @foreach (var notif in notificationList)
             {
-                @* Added @onclick to navigate to details *@
                 <div class="notif-card @(notif.IsRead ? "" : "unread")" @onclick="() => OpenDetails(notif.Id)">
                     <div class="notif-left">
                         <img src="@notif.IconPath" class="notif-icon" />
@@ -75,13 +74,13 @@
 
         notificationList = dbNotifs.Select(n => new NotifDisplayModel
         {
-            Id = n.Id, // Passed ID for navigation
+            Id = n.Id,
             Title = $"Report {n.Status}",
             VehicleNumber = n.VehicleNumber ?? "N/A",
             Status = n.Status,
             Remarks = n.AdminRemarks,
             DateString = n.SubmittedAt.ToString("MMM dd, yyyy"),
-            IsRead = n.IsRead, // Passed read status
+            IsRead = n.IsRead,
             IconPath = n.Status == "Resolved" ? "images/icons/Safe.png" : "images/icons/Police.png"
         }).ToList();
     }

@@ -20,7 +20,6 @@
     </div>
 
     <div class="edit-form-container">
-        @* Profile Picture Section *@
         <div class="edit-pic-section">
             <div class="profile-pic-container">
                 @if (editUser.ProfilePicture != null)
@@ -44,7 +43,6 @@
             <div class="error-banner">@error</div>
         }
 
-        @* Personal Information *@
         <div class="input-group">
             <label>First Name</label>
             <input @bind="editUser.FirstName"
@@ -68,7 +66,6 @@
 
         <div class="input-group">
             <label>Date of Birth</label>
-            @* The bind:format is critical here to show existing data *@
             <input type="date"
                    @bind="editUser.DOB"
                    @bind:format="yyyy-MM-dd"
@@ -84,7 +81,6 @@
 
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
 
-        @* Password Section *@
         <div class="input-group">
             <label>New Password</label>
             <input @bind="newPassword" type="password"
@@ -121,7 +117,6 @@
         
         var u = UserState.CurrentUser;
 
-        // Populate the editUser with current data
         editUser = new User
         {
             Id = u.Id,
@@ -129,14 +124,13 @@
             LastName = u.LastName,
             PhoneNumber = u.PhoneNumber,
             ProfilePicture = u.ProfilePicture,
-            DOB = u.DOB, // Ensure the existing date is mapped here
+            DOB = u.DOB,
             Address = u.Address
         };
     }
 
     private bool IsValidPhone() => !string.IsNullOrWhiteSpace(editUser.PhoneNumber) && editUser.PhoneNumber.All(char.IsDigit) && editUser.PhoneNumber.Length >= 10;
     
-    // Allow null if the DB had null, but if they enter a date, it must be valid
     private bool IsValidDOB() => editUser.DOB.HasValue && editUser.DOB < DateTime.Now.AddYears(-5);
 
     private bool IsValidPassword() => string.IsNullOrEmpty(newPassword) || newPassword.Length >= 6;

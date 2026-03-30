@@ -7,18 +7,7 @@
 
 <div class="main-layout @ActiveTheme">
     <div class="safe-area">
-        @if (isLoading)
-        {
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh;">
-                <img src="images/logo.svg" style="width: 120px; margin-bottom: 20px;" />
-                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
-                <p style="margin-top: 15px; color: #666; font-weight: 500;">Loading...</p>
-            </div>
-        }
-        else
-        {
-            @Body
-        }
+        @Body
     </div>
 
     @if (UserState.IsLoggedIn)
@@ -75,35 +64,28 @@
 
 @code {
     private string currentPath = "";
-    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. Initial Path Setup
         UpdatePath();
 
-        // 2. IMPORTANT: Re-add the listener so Nav updates when you click icons
         Nav.LocationChanged += (s, e) =>
         {
             UpdatePath();
             StateHasChanged();
         };
 
-        // 3. Persistent Login Security Check
         var savedId = await SecureStorage.Default.GetAsync("logged_in_user_id");
         
         if (string.IsNullOrEmpty(savedId))
         {
-            UserState.Logout(); // Ensure memory is wiped if storage is empty
             if (IsProtectedRoute(currentPath))
             {
                 Nav.NavigateTo("/login");
             }
         }
 
-        await Task.Delay(300);
-        isLoading = false;
-        StateHasChanged();
+        // No more isLoading or Task.Delay here
     }
 
     private bool IsProtectedRoute(string path)

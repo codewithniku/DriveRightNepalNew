@@ -89,13 +89,11 @@
 
         using var ctx = await DbFactory.CreateDbContextAsync();
 
-        // 1. Fetch all Quizzes and the User's attempts for those quizzes
         var dbQuizzes = await ctx.Quizzes.ToListAsync();
         var userAttempts = await ctx.QuizAttempts
             .Where(a => a.UserId == UserState.CurrentUser.Id)
             .ToListAsync();
 
-        // 2. Map to UI Model
         quizList = dbQuizzes.Select(q =>
         {
             var attemptsForThisQuiz = userAttempts.Where(a => a.QuizId == q.Id).ToList();
@@ -110,7 +108,6 @@
             };
         }).ToList();
 
-        // 3. Calculate Header Stats
         totalQuizzes = quizList.Count;
         completedCount = quizList.Count(q => q.AttemptedTimes > 0);
         if (userAttempts.Any())

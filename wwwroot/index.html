@@ -3,71 +3,162 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>driverightnepal</title>
+    <title>Drive Right Nepal</title>
     <base href="/" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="driverightnepal.styles.css" />
-    <link rel="icon" href="data:,">
+    <link rel="icon" type="image/png" href="images/icons/Logo.png">
+
+    <style>
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #F0FDF4;
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+        }
+
+        .loading-logo {
+            width: 120px;
+            margin-bottom: 25px;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        .loading-text {
+            color: #009132;
+            font-weight: 700;
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+        }
+
+        .loading-subtext {
+            color: #666;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        .loader-bar-container {
+            width: 200px;
+            height: 4px;
+            background-color: #e2e8f0;
+            border-radius: 10px;
+            margin-top: 25px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loader-bar-fill {
+            width: 40%;
+            height: 100%;
+            background-color: #009132;
+            border-radius: 10px;
+            position: absolute;
+            animation: progress-slide 1.5s infinite ease-in-out;
+        }
+
+        @keyframes progress-slide {
+            0% {
+                left: -40%;
+            }
+
+            100% {
+                left: 100%;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+    </style>
 </head>
-
 <body>
-
-    <div class="status-bar-safe-area"></div>
-
-    <div id="app">Loading...</div>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/progress.js"></script>
-
-
-    <div id="blazor-error-ui" data-nosnippet>
-        An unhandled error has occurred.
-        <a href="." class="reload">Reload</a>
-        <span class="dismiss">🗙</span>
+    <div id="app">
+        <div class="loading-container">
+            <img src="images/icons/Logo.png" class="loading-logo" alt="Logo" />
+            <div class="loading-text">Drive Right Nepal</div>
+            <div class="loading-subtext">SAFE ROADS, SMART DRIVERS</div>
+            <div class="loader-bar-container">
+                <div class="loader-bar-fill"></div>
+            </div>
+        </div>
     </div>
 
-    <script src="_framework/blazor.webview.js" autostart="false"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="js/progress.js"></script>
+    <script src="_framework/blazor.webview.js" autostart="false"></script>
+
     <script>
-        window.renderPdf = (base64Data, wrapperId) => {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-            const wrapper = document.getElementById(wrapperId);
-            if (!wrapper) return; // Guard clause
-
-            var binary_string = window.atob(base64Data);
-            var bytes = new Uint8Array(binary_string.length);
-            for (var i = 0; i < binary_string.length; i++) { bytes[i] = binary_string.charCodeAt(i); }
-
-            var loadingTask = pdfjsLib.getDocument({ data: bytes });
-            loadingTask.promise.then(function (pdf) {
-                wrapper.innerHTML = ''; // This clears the previous question's PDF
-
-                for (var i = 1; i <= pdf.numPages; i++) {
-                    renderPage(pdf, i, wrapper);
+        (function () {
+            window.renderPdf = function (base64Data, wrapperId) {
+                const pdfjs = window['pdfjsLib'];
+                if (!pdfjs) {
+                    console.error("PDF.js library not loaded yet.");
+                    return;
                 }
-            }).catch(err => console.error("PDF.js Error:", err));
 
-            function renderPage(pdf, pageNumber, wrapper) {
-                pdf.getPage(pageNumber).then(function (page) {
-                    // Calculate scale based on the container width for responsiveness
-                    var viewport = page.getViewport({ scale: 1 });
-                    var scale = (wrapper.clientWidth > 0 ? wrapper.clientWidth : 300) / viewport.width;
-                    var scaledViewport = page.getViewport({ scale: scale });
+                pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-                    var canvas = document.createElement('canvas');
-                    canvas.style.display = "block";
-                    canvas.style.margin = "0 auto 10px auto";
-                    var context = canvas.getContext('2d');
-                    canvas.height = scaledViewport.height;
-                    canvas.width = scaledViewport.width;
+                const wrapper = document.getElementById(wrapperId);
+                if (!wrapper) return;
 
-                    wrapper.appendChild(canvas);
-                    page.render({ canvasContext: context, viewport: scaledViewport });
-                });
-            }
-        };
+                try {
+                    const binary_string = window.atob(base64Data);
+                    const bytes = new Uint8Array(binary_string.length);
+                    for (let i = 0; i < binary_string.length; i++) {
+                        bytes[i] = binary_string.charCodeAt(i);
+                    }
+
+                    const loadingTask = pdfjs.getDocument({ data: bytes });
+                    loadingTask.promise.then(function (pdf) {
+                        wrapper.innerHTML = '';
+
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            pdf.getPage(i).then(function (page) {
+                                // Calculate scale for native screen fit
+                                const viewport = page.getViewport({ scale: 1 });
+                                const containerWidth = window.innerWidth;
+                                const scale = containerWidth / viewport.width;
+
+                                // Increase resolution for sharp text on mobile
+                                const outputScale = window.devicePixelRatio || 1;
+                                const scaledViewport = page.getViewport({ scale: scale * outputScale });
+
+                                const canvas = document.createElement('canvas');
+                                canvas.style.display = "block";
+                                canvas.style.width = "100%";
+                                canvas.style.height = "auto";
+
+                                canvas.width = Math.floor(viewport.width * scale * outputScale);
+                                canvas.height = Math.floor(viewport.height * scale * outputScale);
+
+                                const context = canvas.getContext('2d');
+                                wrapper.appendChild(canvas);
+
+                                page.render({
+                                    canvasContext: context,
+                                    viewport: scaledViewport
+                                });
+                            });
+                        }
+                    }).catch(err => console.error("PDF.js Error:", err));
+                } catch (e) {
+                    console.error("Base64 decoding failed", e);
+                }
+            };
+        })();
     </script>
 </body>
-
 </html>

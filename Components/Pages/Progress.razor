@@ -93,7 +93,6 @@
         using var ctx = await DbFactory.CreateDbContextAsync();
         var userId = UserState.CurrentUser?.Id ?? 0;
 
-        // 1. Calculate Overall Progress
         totalLessonsCount = await ctx.Lessons.CountAsync();
         var userProgress = await ctx.UserProgress
             .Where(up => up.UserId == userId && up.IsCompleted)
@@ -102,7 +101,6 @@
         completedCount = userProgress.Count;
         overallPercentage = totalLessonsCount > 0 ? (completedCount * 100 / totalLessonsCount) : 0;
 
-        // 2. Calculate Chapter-wise Progress
         var allLessons = await ctx.Lessons.ToListAsync();
         var lessonsByCategory = allLessons.GroupBy(l => l.Category ?? "General");
 
@@ -117,14 +115,12 @@
             };
         }).ToList();
 
-        // 3. Load Quiz Performance (Last 5 attempts)
         var quizAttempts = await ctx.QuizAttempts
             .Where(qa => qa.UserId == userId)
             .OrderBy(qa => qa.AttemptDate)
             .Take(5)
             .ToListAsync();
 
-        // Generate "1", "2", "3" labels based on the count of attempts
         Labels = Enumerable.Range(1, quizAttempts.Count)
                           .Select(i => i.ToString())
                           .ToList();
@@ -137,7 +133,6 @@
     {
         if (!isLoading && QuizScores.Any())
         {
-            // Small delay to ensure Canvas is in DOM
             await Task.Delay(100);
             await JS.InvokeVoidAsync("renderQuizChart", Labels.ToArray(), QuizScores.ToArray());
         }

@@ -32,7 +32,7 @@
                 </div>
                 <div class="lesson-right">
                     <span class="lesson-title">@lesson.Title</span>
-                    <span class="lesson-questions">@lesson.QuestionsCount questions</span>
+                   <span class="lesson-questions">@lesson.QuestionsCount questions</span>
                     <div class="progress-bar-container">
                         <div class="progress-bar" style="width:@lesson.Progress%"></div>
                     </div>
@@ -50,24 +50,19 @@
     {
         using var context = await DbFactory.CreateDbContextAsync();
         
-        // 1. Get all lessons from DB
         var dbLessons = await context.Lessons.OrderBy(l => l.ChapterNumber).ToListAsync();
 
-        // 2. Get current user's progress
         var userProgress = await context.UserProgress
             .Where(p => p.UserId == UserState.CurrentUser.Id)
             .ToListAsync();
 
-        // 3. Map DB data to your UI model
         lessonList = dbLessons.Select(l => new LessonDisplayModel
         {
             Id = l.Id,
             Title = l.Title,
-            // Map icons based on category or title
             IconPath = GetIconPath(l.Category), 
             // We'll handle question counts later when we build the Quiz table
             QuestionsCount = 10, 
-            // Calculate progress: if entry exists in UserProgress and IsCompleted is true, 100%
             Progress = userProgress.Any(p => p.LessonId == l.Id && p.IsCompleted) ? 100 : 0
         }).ToList();
     }
@@ -87,7 +82,6 @@
         Nav.NavigateTo($"/lesson-details/{lesson.Id}");
     }
 
-    // A small helper class for the UI
     public class LessonDisplayModel
     {
         public int Id { get; set; }

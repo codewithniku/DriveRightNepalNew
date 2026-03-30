@@ -6,16 +6,9 @@
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject NavigationManager Nav
 
-<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: white;">
-    <img src="images/logo.svg" style="width: 150px; margin-bottom: 20px;" />
-    <div class="spinner-border text-primary" role="status"></div>
-    <p style="margin-top: 20px; color: #666;">Starting DriveRight...</p>
-</div>
-
 @code {
     protected override async Task OnInitializedAsync()
     {
-        // 1. Check for saved session
         string savedId = await SecureStorage.Default.GetAsync("logged_in_user_id");
 
         if (!string.IsNullOrEmpty(savedId) && int.TryParse(savedId, out int userId))
@@ -38,7 +31,6 @@
             }
         }
 
-        // 2. If no user found or error occurs, go to register
         Nav.NavigateTo("/register");
     }
 }

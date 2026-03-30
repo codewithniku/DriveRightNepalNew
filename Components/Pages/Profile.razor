@@ -107,13 +107,10 @@
 
     private async Task HandleLogout()
     {
-        // 1. Clear the persistent ID here where MAUI is available
         SecureStorage.Default.Remove("logged_in_user_id");
 
-        // 2. Clear the in-memory user
         UserState.Logout();
 
-        // 3. Redirect
         Nav.NavigateTo("/login", true);
     }
 }

@@ -50,6 +50,9 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    /* Removed padding to allow PDF to touch edges */
+    padding: 0 !important;
+    overflow-x: hidden;
 }
 
 .html-content {
@@ -62,17 +65,21 @@
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
+/* TWEAKED: Full screen edge-to-edge PDF */
 .pdf-wrapper {
     width: 100%;
-    background: #e8e8e8;
+    background: transparent; /* Blends with app background */
+    margin: 0;
+    padding: 0;
 }
 
     .pdf-wrapper canvas {
         display: block;
-        margin: 10px auto;
-        max-width: 95%;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        border-radius: 4px;
+        width: 100% !important; /* Forces fill */
+        height: auto !important;
+        margin: 0 !important; /* Removes gaps between pages */
+        box-shadow: none !important; /* Removes paper effect */
+        border-radius: 0 !important;
     }
 
 .finish-section {
@@ -83,10 +90,10 @@
 .finish-btn {
     width: 100%;
     padding: 16px;
-    background-color: #009132; /* Matching the brand green */
+    background-color: #009132;
     color: white;
     border: none;
-    border-radius: 15px; /* Matching lesson card radius */
+    border-radius: 15px;
     font-size: 18px;
     font-weight: 600;
     box-shadow: 0 4px 15px rgba(0, 145, 50, 0.3);
@@ -100,7 +107,7 @@
 .completed-btn {
     width: 100%;
     padding: 16px;
-    background-color: #A5D6A7; /* Softer green for completed */
+    background-color: #A5D6A7;
     color: white;
     border: none;
     border-radius: 15px;
