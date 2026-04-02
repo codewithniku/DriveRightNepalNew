@@ -225,7 +225,7 @@
             ctx.ViolationReports.Add(report);
             await ctx.SaveChangesAsync();
 
-            Nav.NavigateTo("/dashboard");
+            Nav.NavigateTo("/violation-history");
         }
         catch (Exception ex)
         {
