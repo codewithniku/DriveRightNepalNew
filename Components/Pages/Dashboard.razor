@@ -40,123 +40,123 @@
                     }
                 </button>
             </div>
+        </div>
+
+        <div class="header-progress" @onclick="GoToProgress">
+            <span>Progress Overview</span>
+            <div class="progress-text">
+                <span>@completedCount out of @totalLessons lessons completed</span>
+                <span class="progress-percent">@Math.Round(overallProgress, 1)%</span>
             </div>
 
-            <div class="header-progress" @onclick="GoToProgress">
-                <span>Progress Overview</span>
-                <div class="progress-text">
-                    <span>@completedCount out of @totalLessons lessons completed</span>
-                    <span class="progress-percent">@Math.Round(overallProgress, 1)%</span>
-                </div>
-
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width:@overallProgress%"></div>
-                </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width:@overallProgress%"></div>
             </div>
-        </div>
-
-        <div class="section-title">Quick Actions</div>
-        <div class="quick-actions">
-            <NavLink href="/lessons" class="action-card">
-                <img src="images/icons/Book.png" alt="Lessons" />
-                <span>Lessons</span>
-                <p>Continue Learning</p>
-            </NavLink>
-            <NavLink href="/quiz" class="action-card">
-                <img src="images/icons/Scorecard.png" alt="Tests" />
-                <span>Practice Tests</span>
-                <p>Test Yourself</p>
-            </NavLink>
-            <NavLink href="/emergency" class="action-card">
-                <img src="images/icons/Emergency.png" alt="Emergency" />
-                <span>Emergency</span>
-                <p>Emergency Services</p>
-            </NavLink>
-            <NavLink href="/mock-exam" class="action-card">
-                <img src="images/icons/Quiz.png" alt="Mock" />
-                <span>Mock Exam</span>
-                <p>Final Preparation</p>
-            </NavLink>
-            <NavLink href="/violation" class="action-card">
-                <img src="images/icons/report.png" alt="Violation" />
-                <span>Report Violation</span>
-                <p>Road Safety</p>
-            </NavLink>
-            <NavLink href="/nearby-services" class="action-card">
-                <img src="images/icons/wrench.png" alt="Services" />
-                <span>Nearby Services</span>
-                <p>Find Workshops</p>
-            </NavLink>
-        </div>
-
-        <div class="section-title">Continue Learning</div>
-        <div class="continue-card">
-            <div class="continue-info">
-                @if (nextLesson != null)
-                {
-                    <p class="chapter-title">@nextLesson.Title</p>
-                    <span class="chapter-sub">Chapter @nextLesson.ChapterNumber</span>
-                }
-                else
-                {
-                    <p class="chapter-title">All Caught Up!</p>
-                    <span class="chapter-sub">You've finished all lessons.</span>
-                }
-            </div>
-    
-            @if (nextLesson != null)
-            {
-                <button class="primary-btn" @onclick='() => Nav.NavigateTo($"/lesson-details/{nextLesson.Id}")'>
-                    Continue
-                </button>
-            }
-            else
-            {
-                <button class="primary-btn" @onclick='() => Nav.NavigateTo("/mock-exam")'>
-                    Take Mock Exam
-                </button>
-            }
-        </div>
-
-        <div class="section-title d-flex justify-content-between">
-            <span>My Violation Reports</span>
-            <button class="view-all-link" @onclick='() => Nav.NavigateTo("/violation-history")'>View All</button>
-        </div>
-
-        <div class="reports-summary">
-            @if (myRecentReports == null || !myRecentReports.Any())
-            {
-                <div class="empty-reports">
-                    <p>No reports submitted yet.</p>
-                </div>
-            }
-            else
-            {
-                @foreach (var report in myRecentReports)
-                {
-                    <div class="mini-report-card-container">
-                        <div class="mini-report-card">
-                            <div class="report-main">
-                                <span class="report-type">@report.ViolationType</span>
-                                <span class="report-vehicle">@report.VehicleNumber</span>
-                            </div>
-                            <div class="report-status">
-                                <span class="status-dot @report.Status.ToLower()"></span>
-                                <span class="status-text">@report.Status</span>
-                            </div>
-                        </div>
-
-                        @if (report.Status == "Rejected" && !string.IsNullOrEmpty(report.AdminRemarks))
-                        {
-                            <div class="admin-feedback">
-                                <strong>Reason:</strong> @report.AdminRemarks
-                            </div>
-                        }
-                    </div>
-                }
-            }
         </div>
     </div>
+
+    <div class="section-title">Quick Actions</div>
+    <div class="quick-actions">
+        <NavLink href="/lessons" class="action-card">
+            <img src="images/icons/Book.png" alt="Lessons" />
+            <span>Lessons</span>
+            <p>Continue Learning</p>
+        </NavLink>
+        <NavLink href="/quiz" class="action-card">
+            <img src="images/icons/Scorecard.png" alt="Tests" />
+            <span>Practice Tests</span>
+            <p>Test Yourself</p>
+        </NavLink>
+        <NavLink href="/emergency" class="action-card">
+            <img src="images/icons/Emergency.png" alt="Emergency" />
+            <span>Emergency</span>
+            <p>Emergency Services</p>
+        </NavLink>
+        <NavLink href="/mock-exam" class="action-card">
+            <img src="images/icons/Quiz.png" alt="Mock" />
+            <span>Mock Exam</span>
+            <p>Final Preparation</p>
+        </NavLink>
+        <NavLink href="/violation" class="action-card">
+            <img src="images/icons/report.png" alt="Violation" />
+            <span>Report Violation</span>
+            <p>Road Safety</p>
+        </NavLink>
+        <NavLink href="/nearby-services" class="action-card">
+            <img src="images/icons/wrench.png" alt="Services" />
+            <span>Nearby Services</span>
+            <p>Find Workshops</p>
+        </NavLink>
+    </div>
+
+    <div class="section-title">Continue Learning</div>
+    <div class="continue-card">
+        <div class="continue-info">
+            @if (nextLesson != null)
+            {
+                <p class="chapter-title">@nextLesson.Title</p>
+                <span class="chapter-sub">Chapter @nextLesson.ChapterNumber</span>
+            }
+            else
+            {
+                <p class="chapter-title">All Caught Up!</p>
+                <span class="chapter-sub">You've finished all lessons.</span>
+            }
+        </div>
+    
+        @if (nextLesson != null)
+        {
+            <button class="primary-btn" @onclick='() => Nav.NavigateTo($"/lesson-details/{nextLesson.Id}")'>
+                Continue
+            </button>
+        }
+        else
+        {
+            <button class="primary-btn" @onclick='() => Nav.NavigateTo("/mock-exam")'>
+                Take Mock Exam
+            </button>
+        }
+    </div>
+
+    <div class="section-title d-flex justify-content-between">
+        <span>My Violation Reports</span>
+        <button class="view-all-link" @onclick='() => Nav.NavigateTo("/violation-history")'>View All</button>
+    </div>
+
+    <div class="reports-summary">
+        @if (myRecentReports == null || !myRecentReports.Any())
+        {
+            <div class="empty-reports">
+                <p>No reports submitted yet.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var report in myRecentReports)
+            {
+                <div class="mini-report-card-container">
+                    <div class="mini-report-card">
+                        <div class="report-main">
+                            <span class="report-type">@report.ViolationType</span>
+                            <span class="report-vehicle">@report.VehicleNumber</span>
+                        </div>
+                        <div class="report-status">
+                            <span class="status-dot @report.Status.ToLower()"></span>
+                            <span class="status-text">@report.Status</span>
+                        </div>
+                    </div>
+
+                    @if (report.Status == "Rejected" && !string.IsNullOrEmpty(report.AdminRemarks))
+                    {
+                        <div class="admin-feedback">
+                            <strong>Reason:</strong> @report.AdminRemarks
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
 }
 else
 {

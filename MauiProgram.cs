@@ -1,9 +1,9 @@
 ﻿using driverightnepal;
 using driverightnepal.Core.Data;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using driverightnepal.Core.Services;
 using Microsoft.AspNetCore.Components.WebView.Maui;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 public static class MauiProgram
 {

@@ -32,7 +32,7 @@
                 </div>
                 <div class="lesson-right">
                     <span class="lesson-title">@lesson.Title</span>
-                   <span class="lesson-questions">@lesson.QuestionsCount questions</span>
+                    <span class="lesson-questions">@lesson.QuestionsCount questions</span>
                     <div class="progress-bar-container">
                         <div class="progress-bar" style="width:@lesson.Progress%"></div>
                     </div>
@@ -60,9 +60,9 @@
         {
             Id = l.Id,
             Title = l.Title,
-            IconPath = GetIconPath(l.Category), 
+            IconPath = GetIconPath(l.Category),
             // We'll handle question counts later when we build the Quiz table
-            QuestionsCount = 10, 
+            QuestionsCount = 10,
             Progress = userProgress.Any(p => p.LessonId == l.Id && p.IsCompleted) ? 100 : 0
         }).ToList();
     }
@@ -91,4 +91,3 @@
         public int Progress { get; set; }
     }
 }
-
