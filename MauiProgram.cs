@@ -4,6 +4,7 @@ using driverightnepal.Core.Services;
 using Microsoft.AspNetCore.Components.WebView.Maui;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MudBlazor.Services;
 
 public static class MauiProgram
 {
@@ -31,6 +32,7 @@ public static class MauiProgram
         builder.Services.AddSingleton(new ConfigService { BaseUrl = adminApiUrl });
         builder.Services.AddScoped<MockGeneratorService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddMudServices();
 
 #if ANDROID
         Microsoft.Maui.Handlers.WebViewHandler.Mapper.AppendToMapping("BlazorCustomization", (handler, view) =>

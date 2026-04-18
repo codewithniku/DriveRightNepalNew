@@ -40,6 +40,40 @@ body {
     margin-bottom: 16px;
 }
 
+.error-box {
+    background-color: #fff5f5;
+    border: 1px solid #feb2b2;
+    color: #c53030;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.error-icon {
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+.error-text {
+    font-weight: 500;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .form-group {
     width: 100%;
     margin-bottom: 16px;

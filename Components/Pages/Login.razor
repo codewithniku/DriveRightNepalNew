@@ -23,7 +23,10 @@
         
         @if (!string.IsNullOrEmpty(message))
         {
-            <p class="form-message">@message</p>
+            <div class="error-box">
+                <span class="error-icon">⚠️</span>
+                <span class="error-text">@message</span>
+            </div>
         }
 
         <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
@@ -99,7 +102,7 @@
 
                     await EmailService.SendEmailAsync(user.Email, subject, body);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     message = "Failed to send OTP email. Please try again later.";
                     return;
@@ -112,9 +115,9 @@
                 message = "Invalid email or password.";
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            message = $"Error: {ex.Message}";
+            message = "An unexpected error occurred. Please try again.";
         }
     }
 

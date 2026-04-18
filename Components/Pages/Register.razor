@@ -9,11 +9,10 @@
 @inject NavigationManager Nav
 @inject IEmailService EmailService
 
+
 <title>Register</title>
 <head>
-    <link href="css/signup.css" rel="stylesheet" />
-</head>
-<div class="login-wrapper">
+    <link href="css/signup.css" rel="stylesheet" /></head><div class="login-wrapper">
     <div class="login-container">
         <img src="images/logo.svg" class="login-logo" />
         <h2>Sign Up</h2>
@@ -69,8 +68,7 @@
                 <NavLink class="signup-link" href="/login">Login</NavLink>
             </p>
         </EditForm>
-    </div>
-</div>
+    </div></div>
 
 @code {
     private RegisterModel registerModel = new RegisterModel { DOB = DateTime.Today.AddYears(-18) };
@@ -124,14 +122,7 @@
         try
         {
             string welcomeSubject = "Welcome to Drive Right Nepal!";
-            string welcomeBody = $@"
-                <div style='font-family: Arial, sans-serif; color: #333;'>
-                    <h2 style='color: #009132;'>Namaste {user.FirstName}!</h2>
-                    <p>Welcome to <b>Drive Right Nepal</b>. We are thrilled to have you join our community dedicated to safe and smart driving.</p>
-                    <p>Your account has been created successfully. For your security, we use Two-Factor Authentication (2FA). Every time you log in, you will receive a secure OTP on this email address.</p>
-                    <hr/>
-                    <p style='font-size: 0.8rem; color: #666;'>This is an automated welcome email. No response is needed.</p>
-                </div>";
+            string welcomeBody = $@"                <div style='font-family: Arial, sans-serif; color: #333;'>                    <h2 style='color: #009132;'>Namaste {user.FirstName}!</h2>                    <p>Welcome to <b>Drive Right Nepal</b>. We are thrilled to have you join our community dedicated to safe and smart driving.</p>                    <p>Your account has been created successfully. For your security, we use Two-Factor Authentication (2FA). Every time you log in, you will receive a secure OTP on this email address.</p>                    <hr/>                    <p style='font-size: 0.8rem; color: #666;'>This is an automated welcome email. No response is needed.</p>                </div>";
 
             await EmailService.SendEmailAsync(user.Email, welcomeSubject, welcomeBody);
         }
@@ -151,5 +142,4 @@
         var bytes = System.Text.Encoding.UTF8.GetBytes(password);
         var hashBytes = sha256.ComputeHash(bytes);
         return Convert.ToBase64String(hashBytes);
-    }
-}
+    }}
