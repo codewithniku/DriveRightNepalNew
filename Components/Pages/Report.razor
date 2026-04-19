@@ -142,7 +142,9 @@
         if (status == PermissionStatus.Granted)
         {
             var location = await Geolocation.Default.GetLocationAsync(new GeolocationRequest(GeolocationAccuracy.Medium));
-            LocationAddress = location != null ? $"{location.Latitude}, {location.Longitude}" : "Location not found";
+            //LocationAddress = location != null ? $"{location.Latitude}, {location.Longitude}" : "Location not found";
+            LocationAddress = location != null ? "Location Fetched" : "Location not found";
+
         }
     }
 
@@ -231,6 +233,7 @@
         }
         catch (Exception ex)
         {
+            errorMessage = ex.InnerException?.Message ?? ex.Message;
             errorMessage = $"Error: {ex.Message}";
             StateHasChanged();
         }
